@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import rospy
 import json
-import os
+import sys
 from sensor_msgs.msg import Range
 from sensor_msgs.msg import NavSatFix
 from nav_msgs.msg import OccupancyGrid
@@ -12,7 +12,7 @@ import math
 
 
 class MeasurementsPub:
-    def __init__(self):
+    def __init__(self, s):
         #get position
         rospy.Subscriber("/gps", NavSatFix, self.gps_callback)
         #rospy.Subscriber("/tf", TransformStamped[], self.position_callback)
@@ -21,30 +21,38 @@ class MeasurementsPub:
         #get map data
         rospy.Subscriber("/map", OccupancyGrid, self.map_callback)
         #No known position and map in the beginning
+        self.fileName = s
         self.hasPosition = False
         self.position = 0
         self.hasMap = False
         self.info = MapMetaData()
         self.visited = None
         self.depth = None
-        with open("depth-data.json", "r") as read_file:
-            try:
-                self.depth = json.load(read_file)
-                self.hasMap = True
-            except Exception as e:
-                print("got %s on json.load()" % e)
+        try:
+            with open(self.fileName + "_depth.json", "r") as read_file:
+                try:
+                    self.depth = json.load(read_file)
+                    self.hasMap = True
+                except Exception as e:
+                    print("got %s on json.load()" % e)
+        except Exception as e:
+            print(e)
 
-        with open("visited-data.json", "r") as read_file:
-            try:
-                self.visited = json.load(read_file)
-            except Exception as e:
-                print("got %s on json.load()" % e)
+        try:
+            with open(self.fileName + "_visited.json", "r") as read_file:
+                try:
+                    self.visited = json.load(read_file)
+                except Exception as e:
+                    print("got %s on json.load()" % e)
+        except Exception as e:
+            print(e)
+
         rospy.on_shutdown(self.save)
 
     def save(self):
-        with open("depth-data.json", "w") as write_file:
+        with open(self.fileName + "_depth.json", "w") as write_file:
             json.dump(self.depth, write_file)
-        with open("visited-data.json", "w") as write_file:
+        with open(self.fileName + "_visited.json", "w") as write_file:
             json.dump(self.visited, write_file)
 
     def gps_callback(self, data):
@@ -112,7 +120,7 @@ class MeasurementsPub:
     
 def listener():
     rospy.init_node('measurements_listener', anonymous=True)
-    MeasurementsPub()
+    MeasurementsPub(sys.argv[1])
     rospy.spin()
 
 if __name__ == '__main__':
