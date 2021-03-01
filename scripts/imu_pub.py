@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import rospy
-from usv_tf.msg import Heading
+from boot.msg import Heading
 from sensor_msgs.msg import Imu
 import numpy as np
 from tf.transformations import quaternion_from_euler
