@@ -1,0 +1,4 @@
+<launch>
+    <include file="$(find boot)/launch/navigation.launch"/>
+    <include file="$(find boot)/launch/move_base.launch"/>
+</launch> 

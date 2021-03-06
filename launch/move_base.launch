@@ -1,5 +1,7 @@
 <launch>
 
+  <node pkg="boot" type="sonar_point_cloud.py" name="sonar_point_cloud"/>
+
    <master auto="start"/>
  <!-- Run the map server --> 
     <node name="map_server" pkg="map_server" type="map_server" args="$(find boot)/maps/map_2.yaml"/>
