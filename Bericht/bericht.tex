@@ -32,16 +32,16 @@ Die notwendigen Funktionalitäten wurden in Python unter Nutzung von ROS und des
 Mit dem Anstieg der Anzahl der Naturkatastrophen und ihren verursachten Kosten\cite{b1}, nimmt auch die Notwendigkeit zu,  Möglichkeiten für die Verhinderung und Bewältigung von Katastrophen zu finden. Auch die Robotik bietet immer wieder Lösungen, die im Katastrophenschutz eingesetzt werden. Dabei haben Unbemannte Fahrzeuge insbesondere zur Erfassung von Daten ein großes Potenzial \cite{b2}.\\
 Sie können Einsatzkräfte in unzugänglichen oder gefährlichen Umgebungen ersetzen \cite{b3}, welche damit sowohl geschützt, als auch anderen Aufgaben zugeteilt werden können.  Durch die potenziell geringe Größe und Lautstärke der Fahrzeuge können auch Gebiete erfasst werden, die sonst entweder nicht zugänglich wären, oder unter größeren Eingriffen in die Natur leiden könnten, wie zum Beispiel Naturschutzgebiete.\\
 Besonders für lang andauernde Aufgaben und in Regionen, in denen man damit rechnen muss, nicht immer mit dem Fahrzeug kommunizieren zu können, kann es sinnvoll sein, diese Fahrzeuge nicht nur unbemannt, sondern auch autonom zu gestalten, da das Fahrzeug so nicht durchgehend angesteuert werden muss.\\
-In Hinsicht auf Katastrophen spielt der Schutz vor Hochwasser in Schleswig-Holstein eine besondere Rolle, da etwa ein Viertel der Landesfläche und mehr als 350.000 Menschen durch Sturmfluten gefährdet sind \cite{b4}. Hier könnten Unbemannte Wasserfahrzeuge zum Beispiel durch frühzeitiges Erkennen von Deichbrüchen helfen. Die denkbaren Anwendungsfelder sind allerdings nicht nur auf den Schutz vor unseren Gewässern begrenzt, vielmehr könnten sie auch den Schutz unserer Gewässer abdecken, etwa durch Identifikation von Verschmutzungen und ihrer Quellen.\\
+In Hinsicht auf Katastrophen spielt der Schutz vor Hochwasser in Schleswig-Holstein eine besondere Rolle, da laut der Landesregierung etwa ein Viertel der Landesfläche und mehr als 350.000 Menschen durch Sturmfluten gefährdet sind \footnote{https://www.schleswig-holstein.de/DE/Landesregierung/Themen/InneresSicherheit/Katastrophenschutz/katastrophenschutz\_node.html}. Hier könnten Unbemannte Wasserfahrzeuge zum Beispiel durch frühzeitiges Erkennen von Deichbrüchen helfen. Die denkbaren Anwendungsfelder sind allerdings nicht nur auf den Schutz vor unseren Gewässern begrenzt, vielmehr könnten sie auch den Schutz unserer Gewässer abdecken, etwa durch Identifikation von Verschmutzungen und ihrer Quellen.\\
 Für den Einsatz im und auf dem Wasser sind unter anderem Unbemannte Unterwasserfahrzeuge (UUVs) und Unbemannte Oberflächenfahrzeuge (USVs) möglich \cite{b2}. USVs haben dabei den Vorteil, mehr Sensoren über eine längere Zeitdauer tragen zu können und damit mehr verschiedene Messungen gleichzeitig über einen längeren Zeitraum durchführen zu können, wobei sowohl Messungen an der Oberfläche als auch im Wasser möglich sind \cite{b5}. Trotzdem wird ihnen bis jetzt in der Literatur weniger Beachtung gewidmet, als den Unbemannten Unterwasser Fahrzeugen \cite{b2}.\\
-Aus den genannten Gründen erscheint uns die Entwicklung autonomer USVs, die für vielfältige Szenarien ausgerüstet sind, sinnvoll. In dieser Arbeit sollen dafür erste notwendige Schritte erfolgen, indem ein im Rahmen einer Bachelorarbeit entwickeltes Oberflächenfahrzeug für Wasserexploration in Rettungsszenarien durch Software ergänzt wird, die das autonome Befahren eines Gewässers ermöglicht. Des Weiteren wollen wir ein Anwendungsszenario, das Erfassen der Wassertiefe implementieren und testen. Um die Funktionsweise des Bootes testen zu können, ohne Gefahr zu laufen, das Boot auf dem Wasser zu verlieren, und zukünftigen Gruppen die Arbeit mit dem Boot zu erleichtern, soll außerdem eine Simulation des Bootes auf Basis eines bestehenden Simulators erstellt werden.
+Aus den genannten Gründen erscheint uns die Entwicklung autonomer USVs, die für vielfältige Szenarien ausgerüstet sind, sinnvoll. In dieser Arbeit sollen dafür erste notwendige Schritte erfolgen, indem ein im Rahmen einer Bachelorarbeit entwickeltes Oberflächenfahrzeug für Wasserexploration in Rettungsszenarien durch Software ergänzt wird, die das autonome Befahren eines Gewässers ermöglicht. Des Weiteren wollen wir ein Anwendungsszenario, das Erfassen der Wassertiefe, implementieren und testen. Um die Funktionsweise des Bootes testen zu können, ohne Gefahr zu laufen, das Boot auf dem Wasser zu verlieren, und zukünftigen Gruppen die Arbeit mit dem Boot zu erleichtern, soll außerdem eine Simulation des Bootes auf Basis eines bestehenden Simulators erstellt werden.
 
 \section{Methoden}
 Da auf dem USV bereits ROS installiert und teilweise genutzt wird, liegt es nahe vom von ROS bereitgestellten Navigation Stack \footnote{https://github.com/ros-planning/navigation} Gebrauch zu machen. Dieser bietet viele nützliche Funktionalitäten -unter anderem werden mehrere globale und lokale Planer bereitgestellt- für die autonome Navigation von mobilen Robotern [TODO]. Er wird in einer Vielzahl von Projekten verwendet [TODO] und es gibt mehrere Tutorials zur Benutzung [TODO], weshalb angenommen werden kann, dass die Verwendung des Navigation Stacks die Verständlichkeit des Projekts auch für Außenstehende verbessert.\\
 Auf Basis unserer Zielstellung haben wir mehrere Arbeitspakete identifiziert, auf deren Durchführung im Folgenden eingegangen werden soll:
 \begin{enumerate}
 	\item Auswahl des Simulators
-	\item Einarbeitung Simulator
+	\item Einarbeitung in die Simulationsumgebung
 	\item Simulation der Sensoren des Bootes
 	\item Simulation der Ausgaben des Bootes
 	\item Implementierung der Schnittstellen zum Navigation Stack
@@ -51,10 +51,20 @@ Auf Basis unserer Zielstellung haben wir mehrere Arbeitspakete identifiziert, au
 	\item Schnittstellen zum Navigation Stack, Navigation zu Wegpunkten, Erstellung von Wegpunkten auf Basis der Karte und Erfassung der Wassertiefe auf das Boot übernehmen und -wenn notwendig- anpassen
 \end{enumerate}
 \subsection{Auswahl des Simulators}
+Für die Suche eines geeigneten Simulators haben wir eine Literaturrecherche nach Webster und Watson \cite{b9} vorgenommen. Diese erfolgt nach der Auswahl der Stichworte und zu durchsuchender Datenbanken in drei Schritten:
+\begin{enumerate}
+	\item[step1] Durchsuchung der Datenbanken mit Hilfe der Stichworte nach relevanten Artikeln
+	\item "Go backward" \cite{b9}: Betrachtung von Artikeln, die von den im ersten Schritt gefundenen Artikeln zitiert werden
+	\item "Go forward" \cite{b9}: Betrachtung von Artikeln, in denen die im ersten Schritt gefundenen Artikel zitiert werden
+\end{enumerate}
 Wir haben uns entschieden, das USV im \textit{Unmanned Surface Vehicle Simulator with Realistic Environmental Disturbances} \footnote{https://github.com/disaster-robotics-proalertas/usv\_sim\_lsa} zu simulieren.\\
 Der Master-Branch des Simulators benutzt ROS Kinetic. Da auf dem USV aber momentan ROS Melodic läuft und darüber hinaus Kinetic nach April 2021 nicht mehr von ROS unterstützt wird \cite{b10}, hielten wir es für sinnvoll, zu versuchen, den Simulator auf ROS Melodic laufen zu lassen. Trotz des dafür vorhandenen Branches \footnote{https://github.com/disaster-robotics-proalertas/usv\_sim\_lsa/tree/master-melodic} mussten wir dieses Vorhaben letztendlich aus Zeitgründen und aufgrund von für uns nicht lokalisierbaren Problemen abbrechen und mit Kinetic weiterarbeiten.
+\subsection{Einarbeitung in die Simulationsumgebung}
+Da das Projekt nicht optimal dokumentiert ist, hat die Einarbeitung in den Simulator mehr Zeit in Anspruch genommen, als ursprünglich gedacht. Der Übersichtlichkeit halber wollen wir hier einen Überblick über die für unser Projekt wichtigen Bestandteile geben:\\
+Die Simulationsumgebung stellt 4 verschiedene Boot-Modelle bereit: ein Airboot, ein Differentialboot, ein Ruderboot und ein Segelboot \cite{b6}. Wir haben mit dem Differentialboot-Modell gearbeitet, da es sich bei unserem USV ebenfalls um ein Boot mit 2 Motoren am Heck (s. Figure \ref{boot}) handelt. Wir haben 2 Dateien identifiziert, die das Boot modellieren: \textit{diffboat.xacro}\footnote{https://github.com/disaster-robotics-proalertas/usv\_sim\_lsa/blob/master/usv\_sim/xacro/diffboat.xacro} (modelliert unter anderem die Motoren) und \textit{boat\_subdivided\_validated.xacro}\footnote{https://github.com/disaster-robotics-proalertas/usv\_sim\_lsa/blob/master/usv\_sim/xacro/boat\_subdivided\_validated.xacro} (modelliert unter anderem Sensoren).\\
+Die Szenarien befinden sich im Ordner \textit{scenes}. Durch die Bearbeitung der XML-Dateien kann man z.B. die Anzahl und Positionen der Boote und Bojen, die Position und Art des Terrains und die Position der Kamera anpassen.
 \subsection{Simulation der Sensoren des Bootes}
-Auf dem Boot sind ein GPS-Gerät, ein Kompass, 2 Ultraschallsensoren, eine 360°-Kamera und ein Temperatursensor zur Erfassung von Daten, 2 Motoren für die Fortbewegung und eine 4G/WIFI-Anbindung zur Kommunikation installiert \ref{boot}.\\
+Auf dem Boot sind ein GPS-Gerät, ein Kompass, 2 Ultraschallsensoren, eine 360°-Kamera und ein Temperatursensor zur Erfassung von Daten, 2 Motoren für die Fortbewegung und eine 4G/WIFI-Anbindung zur Kommunikation installiert (Figure \ref{boot}).\\
 \begin{figure}
 	\includegraphics[width=\linewidth]{boot.png}
 	\caption{Sensoren des Bootes}
@@ -79,6 +89,7 @@ Nachdem wir die notwendigen Daten simuliert haben, die auch das echte Boot samme
 	\item \textit{gps}: GPS-Koordinaten des Bootes
 \end{itemize}
 \textit{range\_front}, \textit{range\_depth} und \textit{gps} konnten dabei als Parameter im jeweiligen XML-Element gegeben werden (TODO: s. Code). Für das Publishen von \textit{velocity} und \textit{heading} haben wir die Simulationsumgebung durch Skripte ergänzt:\\
+TODO: Nach ROS-Konvention sollte die x-Achse Richtung Osten und die y-Achse Richtung Norden zeigen [TODO:Quelle]. An dieser Konvention haben wir uns bei der Implementierung orientiert. Wenn im Folgenden von x- oder y-Achse die Rede ist, sei damit auch immer die Achse in Richtung Osten oder Norden gemeint.\\
 Die Geschwindigkeit des Bootes in Bewegungsrichtung, \textit{velocity}, berechnen wir in \textit{TODO} über die Formel:
 \begin{equation}
 v = \sqrt{x^2+y^2}
@@ -104,7 +115,7 @@ Deshalb ist es notwendig, diese Schnittstellen auf dem Boot zu implementieren. D
 \end{figure}
 \subsubsection{tf}
 \subsubsection{odom}
-Auf das Topic '/odom' schreiben wir die aktuellen Geschwindigkeiten des Bootes. Da wir die Frame ID des Bootes als 'base\_link' festgelegt haben, müssen die Position und Orientierung für die Odometrie nicht extra ausgerechnet werden. Als Geschwindigkeit kann 'velocity' übergeben werden.
+Auf das Topic \textit{/odom} schreiben wir die aktuellen Geschwindigkeiten des Bootes. Da wir die Frame ID des Bootes als \textit{base\_link} festgelegt haben, müssen die Position und Orientierung für die Odometrie nicht extra ausgerechnet werden. Als Geschwindigkeit kann \textit{velocity} übergeben werden.
 \subsubsection{map}
 \begin{figure}
 	\includegraphics[width=\linewidth]{diluvio.jpg}
@@ -115,10 +126,9 @@ Für den Map Server haben wir je eine schwarz-weiß Karte der in der Simulation 
 Wichtige Informationen über die Karte, wie die Anzahl der Meter pro Pixel, sowie die Platzierung der linken unteren Ecke in der Simulationsumgebung haben wir berechnet und in einer yaml-Datei (TODO) gespeichert. Da bei dem verbauten GPS-Gerät mit einer Genauigkeit von etwa 2m [TODO] zu rechnen ist, haben wir bei Erzeugung der Karten eine Auflösung von etwa 2m pro Zelle angestrebt.
 \subsection{Navigation zu Wegpunkten}
 Die tatsächliche Navigation zu den Wegpunkten ist nach Implementierung der Schnittstellen Aufgabe des Navigation Stacks (durch das Publishen des Topics \textit{cmd\_vel}). Die Werte aus \textit{cmd\_vel} werden dann in Geschwindigkeiten umgewandelt, die auf die Motoren des Bootes geschrieben werden können.\\
-In Testläufen mit reiner Verarbeitung der \textit{cmd\_vel}-Werte konnte kein sicheres Anfahren der Zielpunkte erreicht werden, obwohl mehrere lokale Planer mit unterschiedlichen Parametern verwendet wurden [TODO]. Wir vermuten als Grund, dass das vom Navigation Stack geforderte Verhalten im Wasser später auftritt, als es an Land der Fall wäre und vom Navigation Stack erwartet wird. Daraufhin haben wir die Verarbeitung des Topics noch durch einen PID-Regler ergänzt. (TODO)
+In Testläufen mit reiner Verarbeitung der \textit{cmd\_vel}-Werte konnte kein sicheres Anfahren der Zielpunkte erreicht werden, obwohl mehrere lokale Planer mit unterschiedlichen Parametern ausprobiert wurden [TODO]. Wir vermuten als Grund, dass das vom Navigation Stack geforderte Verhalten im Wasser später auftritt, als es an Land der Fall wäre und vom Navigation Stack erwartet wird. Daraufhin haben wir die Verarbeitung des Topics noch durch einen PID-Regler ergänzt. (TODO)
 \subsection{Erstellung von Wegpunkten auf Basis der Karte}
 \subsection{Erfassung der Wassertiefe}
-Die Wassertiefe speichern wir analog zu den Daten des Occupancy Grids in einer 1D-Liste gespeichert.
 
 \section{Egebnisse}
 \section{Fazit}
@@ -128,9 +138,9 @@ Die Wassertiefe speichern wir analog zu den Daten des Occupancy Grids in einer 1
 \bibitem{b3} J. G. Bellingham and K. Rajan, “Robotics in remote and hostile environments,” Science (New York, N.Y.), vol. 318, no. 5853, pp. 1098–1102, 2007, doi: 10.1126/science.1146230.
 \bibitem{b4} dpa. (2017, August 19). Sturm und Starkregen. Unwetter hinterlassen Spur der Verwüstung. [Online]. Available: http://www.faz.net/aktuell/gesellschaft/ungluecke/sturm-und-starkregen-unwetter-hinterlassen-spur-der-verwuestung-15158402.html.
 \bibitem{b5} K. Coley, “Unmanned Surface Vehicles: The Future of Data-Collection,” Ocean Chall, vol. 21, pp. 14–15, 2015.
+\bibitem{b9} J. Webster and R. T. Watson, “Analyzing the Past to Prepare for the Future: Writing a Literature Review,” MIS Quarterly, vol. 26, no. 2, pp. xiii–xxiii, 2002. [Online]. Available: http://www.jstor.org/stable/4132319
 \bibitem{b10} Open Robotics. (2020, Juni 11). Distributions. [Online]. Available: http://wiki.ros.org/Distributions.
-\bibitem{b6} Y. Yorozu, M. Hirano, K. Oka, and Y. Tagawa, ``Electron spectroscopy studies on magneto-optical media and plastic substrate interface,'' IEEE Transl. J. Magn. Japan, vol. 2, pp. 740--741, August 1987 [Digests 9th Annual Conf. Magnetics Japan, p. 301, 1982].
-\bibitem{b7} M. Young, The Technical Writer's Handbook. Mill Valley, CA: University Science, 1989.
+\bibitem{b6} M. Paravisi, D. H. Santos, V. Jorge, G. Heck, L. Gonçalves, and A. Amory, “Unmanned Surface Vehicle Simulator with Realistic Environmental Disturbances,” Sensors, vol. 19, no. 5, p. 1068, Mar. 2019.
 \end{thebibliography}
 
 \end{document}
