@@ -43,7 +43,7 @@ In Hinsicht auf Katastrophen spielt der Schutz vor Hochwasser in Schleswig-Holst
 
 Für den Einsatz im und auf dem Wasser sind unter anderem Unbemannte Unterwasserfahrzeuge (UUVs) und Unbemannte Oberflächenfahrzeuge (USVs) möglich \cite{surveyDisasterRobotics}. USVs haben dabei den Vorteil, mehr Sensoren über eine längere Zeitdauer tragen zu können und damit mehr verschiedene Messungen gleichzeitig über einen längeren Zeitraum durchführen zu können, wobei sowohl Messungen an der Oberfläche als auch im Wasser möglich sind \cite{coley2015}. Trotzdem wird ihnen bis jetzt in der Literatur weniger Beachtung gewidmet, als den Unbemannten Unterwasser Fahrzeugen \cite{surveyDisasterRobotics}.
 
-Aus den genannten Gründen erscheint uns die Entwicklung autonomer USVs, die für vielfältige Szenarien ausgerüstet sind, sinnvoll. In dieser Arbeit sollen dafür erste notwendige Schritte erfolgen, indem ein im Rahmen einer Bachelorarbeit entwickeltes Oberflächenfahrzeug für Wasserexploration in Rettungsszenarien durch Software ergänzt wird, die das autonome Befahren eines Gewässers ermöglicht. Des Weiteren wollen wir ein Anwendungsszenario, das Erfassen der Wassertiefe, implementieren und testen. Um die Funktionsweise des Bootes testen zu können, ohne Gefahr zu laufen, das Boot auf dem Wasser zu verlieren, und zukünftigen Gruppen die Arbeit mit dem Boot zu erleichtern, soll außerdem eine Simulation des Bootes auf Basis eines bestehenden Simulators erstellt werden.
+Aus den genannten Gründen erscheint uns die Entwicklung autonomer USVs, die für vielfältige Szenarien im Bereich der Rettungsrobotik ausgerüstet sind, sinnvoll. In dieser Arbeit sollen dafür erste notwendige Schritte erfolgen, indem ein im Rahmen einer Bachelorarbeit entwickeltes Oberflächenfahrzeug für Wasserexploration in Rettungsszenarien durch Software ergänzt wird, die das autonome Befahren eines Gewässers ermöglicht. Des Weiteren wollen wir ein Anwendungsszenario, das Erfassen der Wassertiefe, implementieren und testen. Um die Funktionsweise des Bootes testen zu können, ohne Gefahr zu laufen, das Boot auf dem Wasser zu verlieren, und zukünftigen Gruppen die Arbeit mit dem Boot zu erleichtern, soll außerdem eine Simulation des Bootes auf Basis eines bestehenden Simulators erstellt werden.
 
 \section{Methoden}
 Da auf dem USV bereits ROS installiert und teilweise genutzt wird, liegt es nahe, vom von ROS bereitgestellten Navigation Stack \footnote{\url{https://github.com/ros-planning/navigation}} Gebrauch zu machen. Dieser bietet viele nützliche Funktionalitäten -unter anderem werden mehrere globale und lokale Planer bereitgestellt- für die autonome Navigation von mobilen Robotern \cite{zheng2019ros}. Es gibt sowohl ein Tutorial von ROS \footnote{\url{http://wiki.ros.org/navigation/Tutorials}}, als auch einige andere Quellen (z.B. \cite{zheng2019ros}), die sich mit der Benutzung des Navigation Stacks auseinandersetzen. Auf GitHub wurde das Projekt bis heute etwa 1400 Mal geforkt (Stand 08.03.2021). Das spricht für die Popularität des Navigation Stacks, weshalb angenommen werden kann, dass die Verwendung des Navigation Stacks die Verständlichkeit des Projekts auch für Außenstehende verbessert.
@@ -56,6 +56,7 @@ Auf Basis unserer Zielstellung haben wir mehrere Arbeitspakete identifiziert, au
 	\item Simulation der Ausgaben des Bootes
 	\item Implementierung der Schnittstellen zum Navigation Stack
 	\item Navigation zu Wegpunkten
+	\item Vermeidung dynamischer Hindernisse
 	\item Erstellung von Wegpunkten auf Basis der Karte
 	\item Erfassung der Wassertiefe und Eintragung in Karte
 	\item Schnittstellen zum Navigation Stack, Navigation zu Wegpunkten, Erstellung von Wegpunkten auf Basis der Karte und Erfassung der Wassertiefe auf das Boot übernehmen und -wenn notwendig- anpassen
@@ -164,8 +165,16 @@ Auf das Publishen der Topics \textit{mag}, \textit{temperature}, und \textit{saf
 
 \subsection{Implementierung der Schnittstellen zum Navigation Stack}
 
-Wie in Figure \ref{nav} zu sehen, hat der Roboter die Möglichkeit, Werte auf die Topics \textit{tf}, \textit{odom}, \textit{map}, und \textit{move\_base\_simple/goal}, sowie Sensor Topics des Formates LaserScan oder PointCloud zu publishen und auf das Topic \textit{cmd\_vel} zu subscriben, um mit dem Navigation Stack zu interagieren.\\
-Deshalb ist es notwendig, diese Schnittstellen auf dem Boot zu implementieren. Da wir in der Simulation dieselben Ausgabeschnittstellen erzeugt haben, wie wir sie auf dem echten Boot vorliegen haben werden, genügte eine Implementierung der Schnittstellen zum Navigation Stack sowohl für die Simulation als auch für das echte Boot.
+In Figure \ref{nav} zu kann man mehrere Topics erkennen, die als Schnittstellen zwischen Roboter und Navigation Stack fungieren:
+\begin{itemize}
+	\item \textit{tf}
+	\item \textit{odom}
+	\item \textit{map}
+	\item \textit{move\_base\_simple/goal}
+	\item Sensor Topics des Formates LaserScan oder PointCloud
+	\item \textit{cmd\_vel}
+\end{itemize}
+Im Folgenden soll es darum gehen, wie wir die Werte der Topics generiert bzw. verarbeitet haben. Da wir in der Simulation dieselben Ausgabeschnittstellen erzeugt haben, wie wir sie auf dem echten Boot vorliegen haben werden, genügte eine Implementierung der Schnittstellen zum Navigation Stack sowohl für die Simulation als auch für das echte Boot.
 
 \begin{figure}
 	\includegraphics[width=\linewidth]{overview_tf.png}
@@ -175,9 +184,9 @@ Deshalb ist es notwendig, diese Schnittstellen auf dem Boot zu implementieren. D
 
 \subsubsection{tf}
 
-Der Navigation Stack benötigt 2 Transformationen um zu funktionieren, eine vom \textit{map}-Frame zum \textit{odom}-Frame und eine vom \textit{odom}-Frame zum \textit{base\_link}-Frame. Wie in \textit{REP-105} \cite{REP105} spezifiziert, ist das \textit{map}-Frame ein statisches Weltkoordinatensystem, welches die Position des Bootes in kartesischen Koordinaten auf der Karte darstellt.  Das \textit{odom}-Frame ist ebenfalls ein statisches Koordinatensystem, in dem durch Auswertung der Odometrie die theoretische Position des Bootes bestimmt wird, welche zwar von der echten Position stark abweichen wird, aber dennoch eine genauere Lokalisierung ermöglicht.
+Der Navigation Stack benötigt 2 Transformationen um zu funktionieren, eine vom \textit{map}-Frame zum \textit{odom}-Frame und eine vom \textit{odom}-Frame zum \textit{base\_link}-Frame. Wie in \textit{REP-105} \cite{REP105} spezifiziert, ist das \textit{map}-Frame ein statisches Weltkoordinatensystem, welches die Position des Bootes in kartesischen Koordinaten auf der Karte darstellt.  Das \textit{odom}-Frame ist ebenfalls ein statisches Koordinatensystem, in dem durch Auswertung der Odometrie die theoretische Position des Bootes bestimmt wird, welche zwar von der echten Position stark abweichen kann, aber dennoch eine genauere Lokalisierung ermöglicht.
 
-In unserem Fall werden der Kompass und die Geschwindigkeit für die Odometrie verwendet und das GPS für die Lokalisierung im Weltkoordinatensystem. Dafür setzen wir das \texttt{robot\_localization} Paket ein, welches die nötigen Transformationen bereits zur Verfügung stellt, GPS Koordinaten in Weltkoordinaten umrechnet und Sensorinformationen mit einem Kalman-Filter zusammenfügt \cite{MooreStouchKeneralizedEkf2014}. 
+In unserem Fall werden der Kompass (\textit{mag\_heading}) und die Geschwindigkeit in Bewegungsrichtung (\textit{velocity}) für die Berechnung der Odometrie verwendet. Obwohl wir bei der Orientierung nach Kompass ((\textit{mag\_heading}) in Bewegung eine ungenauere Näherung an die Bewegungsrichtung erwarten, als die Orientierung nach GPS (\textit{gps\_heading}) liefern würde, haben wir uns für die Verwendung von \textit{mag\_heading} entschieden, da für die Berechnung der Odometrie kontinuierliche Daten erwartet werden \cite{REP105}. Bei \textit{gps\_heading} kann es im Gegensatz zu \textit{mag\_heading} zu diskreten Sprüngen kommen. Für die Lokalisierung im Weltkoordinatensystem (also im  \textit{map}-Frame) werden die GPS-Koordinaten verwendet. Dafür setzen wir das \texttt{robot\_localization} \footnote{\url{http://wiki.ros.org/robot_localization}} Paket ein, welches die nötigen Transformationen bereits zur Verfügung stellt, GPS Koordinaten in Weltkoordinaten umrechnet und Sensorinformationen mit einem Kalman-Filter zusammenfügt \cite{MooreStouchKeneralizedEkf2014}.
 
 \subsubsection{odom}
 Auf das Topic \textit{/odom} schreiben wir die aktuellen Geschwindigkeiten des Bootes. Da wir die Frame ID des Bootes als \textit{base\_link} festgelegt haben, müssen die Position und Orientierung für die Odometrie nicht extra ausgerechnet werden. Als Geschwindigkeit kann \textit{velocity} übergeben werden.
@@ -193,10 +202,16 @@ Auf das Topic \textit{/odom} schreiben wir die aktuellen Geschwindigkeiten des B
 Für den Map Server haben wir je eine schwarz-weiß Karte der in der Simulation dargestellten Region (\ref{diluvio}) und der Wakenitz mit Hilfe von OpenStreetMaps \footnote{\url{www.openstreetmap.org/copyright}} erstellt. Dabei stellen weiße Regionen befahrbare und schwarze unbefahrbare Gebiete dar.\\
 Wichtige Informationen über die Karte, wie die Anzahl der Meter pro Pixel, sowie die Platzierung der linken unteren Ecke in der Simulationsumgebung haben wir berechnet und in einer yaml-Datei gespeichert.
 
+\subsubsection{move\_base\_simple/goal}
+\subsubsection{Sensor Topics}
+\subsubsection{cmd\_vel} \label{cmd}
+Die Werte aus \textit{cmd\_vel} werden in einem Skript TODO in Werte zwischen -100 und 100 umgerechnet, die im Anschluss auf die Motoren des Bootes geschrieben werden.
+
 \subsection{Navigation zu Wegpunkten}
 
-Die tatsächliche Navigation zu den Wegpunkten ist nach Implementierung der Schnittstellen Aufgabe des Navigation Stacks (durch das Publishen des Topics \textit{cmd\_vel}). Die Werte aus \textit{cmd\_vel} werden dann in Geschwindigkeiten umgewandelt, die auf die Motoren des Bootes geschrieben werden können.\\
+Die tatsächliche Navigation zu den Wegpunkten ist nach Implementierung der Schnittstellen Aufgabe des Navigation Stacks (durch das Publishen des Topics \textit{cmd\_vel}).\\
 In Testläufen mit reiner Verarbeitung der \textit{cmd\_vel}-Werte konnte kein sicheres Anfahren der Zielpunkte erreicht werden, obwohl mehrere lokale Planer mit unterschiedlichen Parametern ausprobiert wurden (TODO: welche Planer + evtl. Bilder). Wir vermuten als Grund, dass das vom Navigation Stack geforderte Verhalten im Wasser später auftritt, als es an Land der Fall wäre und vom Navigation Stack erwartet wird. Daraufhin haben wir die Verarbeitung des Topics noch durch einen PID-Regler ergänzt. (TODO: Einstellung von P, I, D)
+\subsection{Vermeidung dynamischer Hindernisse}
 \subsection{Erstellung von Wegpunkten auf Basis der Karte}
 \subsection{Erfassung der Wassertiefe}
 
