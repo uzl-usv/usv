@@ -1,10 +1,11 @@
-\documentclass[conference, onecolumn]{IEEEtran}
-%\documentclass[11pt]{article}
-%\usepackage[a4paper,left=3cm,right=3cm,top=3cm,bottom=3.75cm,footskip=1.5cm,headsep=1cm]{geometry}
+%\documentclass[conference, onecolumn]{IEEEtran}
+\documentclass[11pt]{article}
+\usepackage[a4paper,left=3cm,right=3cm,top=3cm,bottom=3.75cm,footskip=1.5cm,headsep=1cm]{geometry}
 
-\IEEEoverridecommandlockouts
+%\IEEEoverridecommandlockouts
 % The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
 \usepackage{cite}
+\usepackage{listings}
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{algorithmic}
 \usepackage{graphicx}
@@ -90,7 +91,7 @@ Der Master-Branch des Simulators benutzt ROS Kinetic. Da auf dem USV aber moment
 \subsection{Einarbeitung in die Simulationsumgebung}
 
 Da das Projekt nicht optimal dokumentiert ist, hat die Einarbeitung in den Simulator mehr Zeit in Anspruch genommen, als ursprünglich gedacht. Der Übersichtlichkeit halber wollen wir hier einen Überblick über die Bestandteile geben, die für unser Projekt angepasst wurden:\\
-Die Simulationsumgebung stellt 4 verschiedene Boot-Modelle bereit: ein Airboot, ein Differentialboot, ein Ruderboot und ein Segelboot \cite{paravisi2019}. Wir haben mit dem Differentialboot-Modell gearbeitet, da es sich bei unserem USV ebenfalls um ein Boot mit 2 Motoren am Heck (s. Figure \ref{boot}) handelt. Wir haben 2 Dateien identifiziert, die das Boot modellieren: \texttt{diffboat.xacro}\footnote{\url{https://github.com/disaster-robotics-proalertas/usv_sim_lsa/blob/master/usv_sim/xacro/diffboat.xacro}} (modelliert unter anderem die Motoren) und \texttt{boat\_subdivided\_validated.xacro}\footnote{\url{https://github.com/disaster-robotics-proalertas/usv_sim_lsa/blob/master/usv_sim/xacro/boat_subdivided_validated.xacro}} (modelliert unter anderem Sensoren). Diese Dateien wurden angepasst, um unser Boot zu modellieren.
+Die Simulationsumgebung stellt 4 verschiedene Boot-Modelle bereit: ein Airboot, ein Differentialboot, ein Ruderboot und ein Segelboot \cite{paravisi2019}. Wir haben das Differentialboot-Modell als Grundlage für unser Modell genommen, da es sich bei unserem USV ebenfalls um ein Boot mit 2 Motoren am Heck (s. Figure \ref{boot}) handelt. Wir haben 2 Dateien identifiziert, die das Boot modellieren: \texttt{diffboat.xacro}\footnote{\url{https://github.com/disaster-robotics-proalertas/usv_sim_lsa/blob/master/usv_sim/xacro/diffboat.xacro}} (modelliert unter anderem die Motoren) und \texttt{boat\_subdivided\_validated.xacro}\footnote{\url{https://github.com/disaster-robotics-proalertas/usv_sim_lsa/blob/master/usv_sim/xacro/boat_subdivided_validated.xacro}} (modelliert unter anderem Sensoren). Diese Dateien wurden angepasst, um unser Boot zu modellieren.
 
 Die Szenarien befinden sich im Ordner \texttt{scenes}. Durch die Bearbeitung der XML-Dateien kann man z.B. die Anzahl und Positionen der Boote und Bojen, die Position und Art des Terrains und die Position der Kamera anpassen.\\
 Ebenfalls hilfreich für die Erstellung neuer Szenarien sind die launch-Dateien in den folgenden Ordnern:
@@ -137,14 +138,14 @@ Da wir für unser Szenario weitestgehend das \texttt{diffboat\_scenario1} übern
 Nachdem wir die notwendigen Daten simuliert haben, die auch das echte Boot sammelt, wollten wir die Daten auch in derselben Form ausgeben, wie es das USV bereits tut. Dafür haben wir die notwendigen Topics und deren Inhalt bestimmt:
 
 \begin{itemize}
-	\item \textit{range\_front}: Daten des vorderen Sonars
-	\item \textit{range\_depth}: Daten des unteren Sonars
-	\item \textit{velocity}: Geschwindigkeit des Bootes in Bewegungsrichtung
-	\item \textit{heading}: unterteilt sich in \textit{gps\_heading}: die Bewegunsrichtung des Bootes und \textit{mag\_heading}: die Orientierung des Bootes
-	\item \textit{gps}: GPS-Koordinaten des Bootes
+	\item \texttt{range\_front}: Daten des vorderen Sonars
+	\item \texttt{range\_depth}: Daten des unteren Sonars
+	\item \texttt{velocity}: Geschwindigkeit des Bootes in Bewegungsrichtung
+	\item \texttt{heading}: unterteilt sich in \texttt{gps\_heading}: die Bewegunsrichtung des Bootes und \texttt{mag\_heading}: die Orientierung des Bootes
+	\item \texttt{gps}: GPS-Koordinaten des Bootes
 \end{itemize}
-\textit{range\_front}, \textit{range\_depth} und \textit{gps} konnten dabei als Parameter im jeweiligen XML-Element gegeben werden. Für das Publishen von \textit{velocity} und \textit{heading} haben wir die Simulationsumgebung durch Skripte ergänzt:\\
-Die Geschwindigkeit des Bootes in Bewegungsrichtung, \textit{velocity}, berechnen wir in \textit{TODO} über die Formel:
+\texttt{range\_front}, \texttt{range\_depth} und \texttt{gps} konnten dabei als Parameter im jeweiligen XML-Element gegeben werden. Für das Publishen von \texttt{velocity} und \texttt{heading} haben wir die Simulationsumgebung durch Skripte ergänzt:\\
+Die Geschwindigkeit des Bootes in Bewegungsrichtung, \texttt{velocity}, berechnen wir in \texttt{vel\_pub} über die Formel:
 
 \begin{equation}
 v = \sqrt{x^2+y^2}
@@ -152,29 +153,35 @@ v = \sqrt{x^2+y^2}
 
 Dabei ist x die Geschwindigkeit in x-Richtung und y die Geschwindigkeit in y-Richtung.\\
 Nach ROS-Konvention sollte die x-Achse Richtung Osten und die y-Achse Richtung Norden zeigen \cite{REP105}. An dieser Konvention haben wir uns bei der Implementierung orientiert. Wenn im Folgenden von x- oder y-Achse die Rede ist, sei damit auch immer die Achse in Richtung Osten oder Norden gemeint.\\
-Deshalb können wir beide Werte aus dem Topic \textit{gps/velocity} auslesen, welches vom simulierten GPS-Modul gepublisht wird.\\
-Für \textit{heading} bestimmen wir die beiden Komponenten \textit{gps\_heading} und \textit{mag\_heading} einzeln:\\
+Deshalb können wir beide Werte aus dem Topic \texttt{gps/velocity} auslesen, welches vom simulierten GPS-Modul gepublisht wird.\\
+Für \texttt{heading} bestimmen wir die beiden Komponenten \texttt{gps\_heading} und \texttt{mag\_heading} einzeln:\\
 Über 
 \begin{equation}
 	atan2(x,y) 	
 \end{equation}
-(wobei wieder x die Geschwindigkeit in x-Richtung und y die Geschwindigkeit in y-Richtung ist) bestimmen wir das \textit{gps\_heading}, also die Bewegungsrichtung nach GPS. \\
-Aus der Komponente \textit{orientation} der simulierten IMU kann durch Umwandlung der ausgegebenen Quaternion in Euler-Winkel das \textit{mag\_heading} bestimmt werden.\\
-Beide Winkelangaben haben wir noch so angepasst, dass statt bei einer Orientierung Richtung Osten, bei einer Orientierung Richtung Norden 0° vorliegen. Beide Werte werden danach auf das Topic \textit{heading} gepublisht.\\
-Auf das Publishen der Topics \textit{mag}, \textit{temperature}, und \textit{safety} haben wir vorerst verzichtet, da diese für unseren Anwendungsfall nicht notwendig waren.
+(wobei wieder x die Geschwindigkeit in x-Richtung und y die Geschwindigkeit in y-Richtung ist) bestimmen wir das \texttt{gps\_heading}, also die Bewegungsrichtung nach GPS. \\
+Aus der Komponente \texttt{orientation} der simulierten IMU kann durch Umwandlung der ausgegebenen Quaternion in Euler-Winkel das \texttt{mag\_heading} bestimmt werden.\\
+Beide Winkelangaben haben wir noch so angepasst, dass statt bei einer Orientierung Richtung Osten, bei einer Orientierung Richtung Norden 0° vorliegen. Beide Werte werden danach auf das Topic \texttt{heading} gepublisht.\\
+Auf das Publishen der folgenden Topics haben wir vorerst verzichtet, da diese für unseren Anwendungsfall nicht notwendig waren:
+\begin{itemize}
+	\item \texttt{mag}
+	\item \texttt{temperature}
+	\item \texttt{safety}
+\end{itemize}
 
 \subsection{Implementierung der Schnittstellen zum Navigation Stack}
 
 In Figure \ref{nav} zu kann man mehrere Topics erkennen, die als Schnittstellen zwischen Roboter und Navigation Stack fungieren:
 \begin{itemize}
-	\item \textit{tf}
-	\item \textit{odom}
-	\item \textit{map}
-	\item \textit{move\_base\_simple/goal}
+	\item \texttt{
+	}
+	\item \texttt{odom}
+	\item \texttt{map}
+	\item \texttt{move\_base\_simple/goal}
 	\item Sensor Topics des Formates LaserScan oder PointCloud
-	\item \textit{cmd\_vel}
+	\item \texttt{cmd\_vel}
 \end{itemize}
-Im Folgenden soll es darum gehen, wie wir die Werte der Topics generiert bzw. verarbeitet haben. Da wir in der Simulation dieselben Ausgabeschnittstellen erzeugt haben, wie wir sie auf dem echten Boot vorliegen haben werden, genügte eine Implementierung der Schnittstellen zum Navigation Stack sowohl für die Simulation als auch für das echte Boot.
+Im Folgenden soll es darum gehen, wie wir die Werte der Topics generiert bzw. verarbeitet haben. Da wir in der Simulation dieselben Ausgabeschnittstellen erzeugt haben, wie wir sie auf dem echten Boot vorliegen haben werden, genügte in den meisten Fällen eine Implementierung der Schnittstellen zum Navigation Stack sowohl für die Simulation als auch für das echte Boot.
 
 \begin{figure}
 	\includegraphics[width=\linewidth]{overview_tf.png}
@@ -190,13 +197,27 @@ Im Folgenden soll es darum gehen, wie wir die Werte der Topics generiert bzw. ve
 	\label{frames}
 \end{figure}
 
-Der Navigation Stack benötigt 2 Transformationen um zu funktionieren, eine vom \textit{map}-Frame zum \textit{odom}-Frame und eine vom \textit{odom}-Frame zum \textit{base\_link}-Frame. Wie in \textit{REP-105} \cite{REP105} spezifiziert, ist das \textit{map}-Frame ein statisches Weltkoordinatensystem, welches die Position des Bootes in kartesischen Koordinaten auf der Karte darstellt.  Das \textit{odom}-Frame ist ebenfalls ein statisches Koordinatensystem, in dem durch Auswertung der Odometrie die theoretische Position des Bootes bestimmt wird, welche zwar von der echten Position stark abweichen kann, aber dennoch eine genauere Lokalisierung ermöglicht.
+Der Navigation Stack benötigt 2 Transformationen um zu funktionieren, eine vom \texttt{map}-Frame zum \texttt{odom}-Frame und eine vom \texttt{odom}-Frame zum \texttt{base\_link}-Frame. Wie in \texttt{REP-105} \cite{REP105} spezifiziert, ist das \texttt{map}-Frame ein statisches Weltkoordinatensystem, welches die Position des Bootes in kartesischen Koordinaten auf der Karte darstellt.  Das \texttt{odom}-Frame ist ebenfalls ein statisches Koordinatensystem, in dem durch Auswertung der Odometrie die theoretische Position des Bootes bestimmt wird, welche zwar von der echten Position stark abweichen kann, aber dennoch eine genauere Lokalisierung ermöglicht.
 
-In unserem Fall werden der Kompass (\textit{mag\_heading}) und die Geschwindigkeit in Bewegungsrichtung (\textit{velocity}) für die Berechnung der Odometrie verwendet. Obwohl wir bei der Orientierung nach Kompass ((\textit{mag\_heading}) in Bewegung eine ungenauere Näherung an die Bewegungsrichtung erwarten, als die Orientierung nach GPS (\textit{gps\_heading}) liefern würde, haben wir uns für die Verwendung von \textit{mag\_heading} entschieden, da für die Berechnung der Odometrie kontinuierliche Daten erwartet werden \cite{REP105}. Bei \textit{gps\_heading} kann es im Gegensatz zu \textit{mag\_heading} zu diskreten Sprüngen kommen. Für die Lokalisierung im Weltkoordinatensystem (also im  \textit{map}-Frame) werden die GPS-Koordinaten verwendet. Dafür setzen wir das \texttt{robot\_localization} \footnote{\url{http://wiki.ros.org/robot_localization}} Paket ein, welches die nötigen Transformationen bereits zur Verfügung stellt, GPS Koordinaten in Weltkoordinaten umrechnet und Sensorinformationen mit einem Kalman-Filter zusammenfügt \cite{MooreStouchKeneralizedEkf2014}.\\
+Für die Erstellung dieser Transformationen setzen wir das \texttt{robot\_localization} \footnote{\url{http://wiki.ros.org/robot_localization}} Paket ein, welches die nötigen Transformationen bereits zur Verfügung stellt, GPS Koordinaten in Weltkoordinaten umrechnet und Sensorinformationen mit einem Kalman-Filter zusammenfügt \cite{MooreStouchKeneralizedEkf2014}.\\
 Der komplette Transformations-Tree einschließlich der statischen Transformationen ist in Figure \ref{frames} zu sehen.
 
+Für die Transformation vom \texttt{odom}- zum \texttt{base\_link}-Frame nutzen wir den \texttt{ekf\_localization\_node}. Dieser kann Messages der Form:
+\begin{itemize}
+	\item Odom
+	\item Imu
+	\item Pose
+	\item Twist
+\end{itemize}
+verwerten.
+In unserem Fall wird die Geschwindigkeit in Bewegungsrichtung (\texttt{velocity}) für die Berechnung einer Odom-Message verwendet.
+Außerdem benutzen wir \texttt{mag\_heading} und die aus der Ableitung von \texttt{mag\_heading} berechnete Winkelgeschwindigkeit zur Erzeugung einer IMU-Message.\\
+Obwohl wir bei der Orientierung nach Kompass (\texttt{mag\_heading}) in Bewegung eine ungenauere Näherung an die Bewegungsrichtung erwarten, als die Orientierung nach GPS (\texttt{gps\_heading}) liefern würde, haben wir uns für die Verwendung von \texttt{mag\_heading} entschieden, da für die Berechnung der Odometrie kontinuierliche Daten erwartet werden \cite{REP105}. Bei \texttt{gps\_heading} kann es im Gegensatz zu \texttt{mag\_heading} zu diskreten Sprüngen kommen.\\
+
+Für die Lokalisierung im Weltkoordinatensystem (also im \texttt{map}-Frame) wurde ebenfalls ein \texttt{ekf\_localization\_node} aufgesetzt. Dieser bekommt eine Odom-Message von einem \texttt{navsat\_transform\_node} \footnote{\url{http://docs.ros.org/en/noetic/api/robot_localization/html/navsat_transform_node.html}}, der die Daten vom Topic \texttt{gps} entsprechend umwandelt. Dieser Node benötigt dafür ebenfalls die vorhin schon beschriebene Imu-Message.
+
 \subsubsection{odom}
-Auf das Topic \textit{/odom} schreiben wir die aktuellen Geschwindigkeiten des Bootes. Da wir die Frame ID des Bootes als \textit{base\_link} festgelegt haben, müssen die Position und Orientierung für die Odometrie nicht extra ausgerechnet werden. Als Geschwindigkeit kann \textit{velocity} übergeben werden.
+Auf das Topic \texttt{/odom} schreiben wir die aktuellen Geschwindigkeiten des Bootes. Da wir die Frame ID des Bootes als \texttt{base\_link} festgelegt haben, müssen die Position und Orientierung für die Odometrie nicht extra ausgerechnet werden. Als Geschwindigkeit kann \texttt{velocity} übergeben werden.
 
 \subsubsection{map}
 
@@ -212,19 +233,21 @@ Wichtige Informationen über die Karte, wie die Anzahl der Meter pro Pixel, sowi
 \subsubsection{move\_base\_simple/goal}
 \subsubsection{Sensor Topics}
 \subsubsection{cmd\_vel} \label{cmd}
-Die Werte aus \textit{cmd\_vel} werden in einem Skript TODO in Werte zwischen -100 und 100 umgerechnet, die im Anschluss auf die Motoren des Bootes geschrieben werden.
+Die Werte aus \texttt{cmd\_vel} werden in Übereinstimmung mit den vom Boot erwarteten Werten in dem Skript \texttt{boat\_diff\_vel\_ctrl} in Werte zwischen -100 und 100 umgewandelt.
 
 \subsection{Navigation zu Wegpunkten}
 
-Die tatsächliche Navigation zu den Wegpunkten ist nach Implementierung der Schnittstellen Aufgabe des Navigation Stacks (durch das Publishen des Topics \textit{cmd\_vel}).\\
-In Testläufen mit reiner Verarbeitung der \textit{cmd\_vel}-Werte konnte kein sicheres Anfahren der Zielpunkte erreicht werden, obwohl mehrere lokale Planer mit unterschiedlichen Parametern ausprobiert wurden (TODO: welche Planer + evtl. Bilder). Wir vermuten als Grund, dass das vom Navigation Stack geforderte Verhalten im Wasser später auftritt, als es an Land der Fall wäre und vom Navigation Stack erwartet wird. Daraufhin haben wir die Verarbeitung des Topics noch durch einen PID-Regler ergänzt. (TODO: Einstellung von P, I, D)
+Die tatsächliche Navigation zu den Wegpunkten ist nach Implementierung der Schnittstellen Aufgabe des Navigation Stacks (durch das Publishen des Topics \texttt{cmd\_vel}).\\
+In Testläufen mit reiner Verarbeitung der \texttt{cmd\_vel}-Werte konnte kein sicheres Anfahren der Zielpunkte erreicht werden, obwohl mehrere lokale Planer mit unterschiedlichen Parametern ausprobiert wurden. Der stabilste Planer schien der \texttt{teb\_local\_planner} \footnote{\url{http://wiki.ros.org/teb_local_planner}} zu sein, weshalb wir uns letztendlich für diesen entschieden haben. Die Parameter, die von den Standardeinstellungen abweichen, sind in Listing \ref{local-planner} zu sehen.\\
+\lstinputlisting[label={local-planner}, caption={Parameter des lokalen Planers}]{base_local_planner_params.yaml}
+Wir vermuteten als Grund für die mäßige Leistung der lokalen Planer, dass das vom Navigation Stack geforderte Verhalten im Wasser später auftritt, als es an Land der Fall wäre und vom Navigation Stack erwartet wird. Daraufhin haben wir die Verarbeitung des Topics noch durch zwei PI-Regler ergänzt. Einer der Regler gleicht die lineare Geschwindigkeit an, der andere die Winkelgeschwindigkeit.
 \subsection{Vermeidung dynamischer Hindernisse}
 \subsection{Erstellung von Wegpunkten auf Basis der Karte}
 \subsection{Erfassung der Wassertiefe}
 
-\section{Egebnisse}
+\section{Ergebnisse}
 \section{Fazit}
 \bibliography{bericht}{}
-\bibliographystyle{plain}
+\bibliographystyle{ieeetran}
 
 \end{document}
