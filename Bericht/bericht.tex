@@ -1,4 +1,4 @@
-\documentclass[conference]{IEEEtran}
+\documentclass[conference, onecolumn]{IEEEtran}
 %\documentclass[11pt]{article}
 %\usepackage[a4paper,left=3cm,right=3cm,top=3cm,bottom=3.75cm,footskip=1.5cm,headsep=1cm]{geometry}
 
@@ -184,9 +184,16 @@ Im Folgenden soll es darum gehen, wie wir die Werte der Topics generiert bzw. ve
 
 \subsubsection{tf}
 
+\begin{figure}
+	\includegraphics[width=\linewidth]{frames.png}
+	\caption{Tf Tree}
+	\label{frames}
+\end{figure}
+
 Der Navigation Stack benötigt 2 Transformationen um zu funktionieren, eine vom \textit{map}-Frame zum \textit{odom}-Frame und eine vom \textit{odom}-Frame zum \textit{base\_link}-Frame. Wie in \textit{REP-105} \cite{REP105} spezifiziert, ist das \textit{map}-Frame ein statisches Weltkoordinatensystem, welches die Position des Bootes in kartesischen Koordinaten auf der Karte darstellt.  Das \textit{odom}-Frame ist ebenfalls ein statisches Koordinatensystem, in dem durch Auswertung der Odometrie die theoretische Position des Bootes bestimmt wird, welche zwar von der echten Position stark abweichen kann, aber dennoch eine genauere Lokalisierung ermöglicht.
 
-In unserem Fall werden der Kompass (\textit{mag\_heading}) und die Geschwindigkeit in Bewegungsrichtung (\textit{velocity}) für die Berechnung der Odometrie verwendet. Obwohl wir bei der Orientierung nach Kompass ((\textit{mag\_heading}) in Bewegung eine ungenauere Näherung an die Bewegungsrichtung erwarten, als die Orientierung nach GPS (\textit{gps\_heading}) liefern würde, haben wir uns für die Verwendung von \textit{mag\_heading} entschieden, da für die Berechnung der Odometrie kontinuierliche Daten erwartet werden \cite{REP105}. Bei \textit{gps\_heading} kann es im Gegensatz zu \textit{mag\_heading} zu diskreten Sprüngen kommen. Für die Lokalisierung im Weltkoordinatensystem (also im  \textit{map}-Frame) werden die GPS-Koordinaten verwendet. Dafür setzen wir das \texttt{robot\_localization} \footnote{\url{http://wiki.ros.org/robot_localization}} Paket ein, welches die nötigen Transformationen bereits zur Verfügung stellt, GPS Koordinaten in Weltkoordinaten umrechnet und Sensorinformationen mit einem Kalman-Filter zusammenfügt \cite{MooreStouchKeneralizedEkf2014}.
+In unserem Fall werden der Kompass (\textit{mag\_heading}) und die Geschwindigkeit in Bewegungsrichtung (\textit{velocity}) für die Berechnung der Odometrie verwendet. Obwohl wir bei der Orientierung nach Kompass ((\textit{mag\_heading}) in Bewegung eine ungenauere Näherung an die Bewegungsrichtung erwarten, als die Orientierung nach GPS (\textit{gps\_heading}) liefern würde, haben wir uns für die Verwendung von \textit{mag\_heading} entschieden, da für die Berechnung der Odometrie kontinuierliche Daten erwartet werden \cite{REP105}. Bei \textit{gps\_heading} kann es im Gegensatz zu \textit{mag\_heading} zu diskreten Sprüngen kommen. Für die Lokalisierung im Weltkoordinatensystem (also im  \textit{map}-Frame) werden die GPS-Koordinaten verwendet. Dafür setzen wir das \texttt{robot\_localization} \footnote{\url{http://wiki.ros.org/robot_localization}} Paket ein, welches die nötigen Transformationen bereits zur Verfügung stellt, GPS Koordinaten in Weltkoordinaten umrechnet und Sensorinformationen mit einem Kalman-Filter zusammenfügt \cite{MooreStouchKeneralizedEkf2014}.\\
+Der komplette Transformations-Tree einschließlich der statischen Transformationen ist in Figure \ref{frames} zu sehen.
 
 \subsubsection{odom}
 Auf das Topic \textit{/odom} schreiben wir die aktuellen Geschwindigkeiten des Bootes. Da wir die Frame ID des Bootes als \textit{base\_link} festgelegt haben, müssen die Position und Orientierung für die Odometrie nicht extra ausgerechnet werden. Als Geschwindigkeit kann \textit{velocity} übergeben werden.
