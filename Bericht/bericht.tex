@@ -173,8 +173,6 @@ Auf das Publishen der folgenden Topics haben wir vorerst verzichtet, da diese f�
 
 In Figure \ref{nav} zu kann man mehrere Topics erkennen, die als Schnittstellen zwischen Roboter und Navigation Stack fungieren:
 \begin{itemize}
-	\item \texttt{
-	}
 	\item \texttt{odom}
 	\item \texttt{map}
 	\item \texttt{move\_base\_simple/goal}
@@ -239,7 +237,7 @@ Die Werte aus \texttt{cmd\_vel} werden in Übereinstimmung mit den vom Boot erwa
 
 Die tatsächliche Navigation zu den Wegpunkten ist nach Implementierung der Schnittstellen Aufgabe des Navigation Stacks (durch das Publishen des Topics \texttt{cmd\_vel}).\\
 In Testläufen mit reiner Verarbeitung der \texttt{cmd\_vel}-Werte konnte kein sicheres Anfahren der Zielpunkte erreicht werden, obwohl mehrere lokale Planer mit unterschiedlichen Parametern ausprobiert wurden. Der stabilste Planer schien der \texttt{teb\_local\_planner} \footnote{\url{http://wiki.ros.org/teb_local_planner}} zu sein, weshalb wir uns letztendlich für diesen entschieden haben. Die Parameter, die von den Standardeinstellungen abweichen, sind in Listing \ref{local-planner} zu sehen.\\
-\lstinputlisting[label={local-planner}, caption={Parameter des lokalen Planers}]{base_local_planner_params.yaml}
+\lstinputlisting[label={local-planner}, caption={Parameter des lokalen Planers}]{../base_local_planner_params.yaml}
 Wir vermuteten als Grund für die mäßige Leistung der lokalen Planer, dass das vom Navigation Stack geforderte Verhalten im Wasser später auftritt, als es an Land der Fall wäre und vom Navigation Stack erwartet wird. Daraufhin haben wir die Verarbeitung des Topics noch durch zwei PI-Regler ergänzt. Einer der Regler gleicht die lineare Geschwindigkeit an, der andere die Winkelgeschwindigkeit.
 \subsection{Vermeidung dynamischer Hindernisse}
 \subsection{Erstellung von Wegpunkten auf Basis der Karte}
