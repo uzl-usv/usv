@@ -2,24 +2,45 @@
 import rospy
 import json
 import sys
-from sensor_msgs.msg import Range
-from sensor_msgs.msg import NavSatFix
+import random
+from std_msgs.msg import Header
+from sensor_msgs import point_cloud2
+from sensor_msgs.msg import Range, NavSatFix, PointCloud2
 from nav_msgs.msg import OccupancyGrid
+from move_base_msgs.msg import MoveBaseActionResult, MoveBaseAction, MoveBaseGoal
+from actionlib_msgs.msg import GoalStatus
+from geometry_msgs.msg import PolygonStamped, Point32
 from geopy.distance import vincenty
 from nav_msgs.msg import MapMetaData
+from actionlib.simple_action_client import SimpleActionClient
+from tf.transformations import quaternion_from_euler
 import numpy as np
 import math
 
 
 class MeasurementsPub:
     def __init__(self, s):
+        self.aera_pub = rospy.Publisher("/measurement_area", PolygonStamped, queue_size=10)
+        self.origin = (-140, -40)
+        self.goal = (self.origin[0], self.origin[1], 1)
+        self.measure_dist = 5
+        self.width = 25
+        self.height = 10
+
+        self.move_base = SimpleActionClient("move_base", MoveBaseAction)
+        self.point_pub = rospy.Publisher('/measurements', PointCloud2, queue_size=10)
+        self.points = []
+
         #get position
-        rospy.Subscriber("/gps", NavSatFix, self.gps_callback)
+        #rospy.Subscriber("/gps", NavSatFix, self.gps_callback)
         #rospy.Subscriber("/tf", TransformStamped[], self.position_callback)
         #get range
         rospy.Subscriber("/range_depth", Range, self.depth_callback)
         #get map data
         rospy.Subscriber("/map", OccupancyGrid, self.map_callback)
+
+#        rospy.Subscriber("/move_base/result", MoveBaseActionResult, self.goal_callback)
+
         #No known position and map in the beginning
         self.fileName = s
         self.hasPosition = False
@@ -49,11 +70,55 @@ class MeasurementsPub:
 
         rospy.on_shutdown(self.save)
 
+    def grid_cell(self, wx, wy):
+        mx = int((wx - self.info.origin.position.x) / self.info.resolution)
+        my = int((wy - self.info.origin.position.y) / self.info.resolution)
+        return self.grid[mx,my]
+
     def save(self):
         with open(self.fileName + "_depth.json", "w") as write_file:
             json.dump(self.depth, write_file)
         with open(self.fileName + "_visited.json", "w") as write_file:
             json.dump(self.visited, write_file)
+
+    def next(self):
+        goal = MoveBaseGoal()
+        goal.target_pose.header.frame_id = "map"
+        goal.target_pose.header.stamp = rospy.Time.now()
+
+        x, y, d = self.goal
+        heading = 0 if d == 1 else np.pi
+
+        qx, qy, qz, qw = quaternion_from_euler(0, 0, heading)
+        goal.target_pose.pose.position.x = x
+        goal.target_pose.pose.position.y = y
+        goal.target_pose.pose.orientation.x = qx
+        goal.target_pose.pose.orientation.y = qy
+        goal.target_pose.pose.orientation.z = qz
+        goal.target_pose.pose.orientation.w = qw
+
+        print("grid", self.grid_cell(x, y))
+    
+        self.move_base.send_goal(goal, self.goal_callback)
+
+    def goal_callback(self, status, result):
+        print("goal reached", status, result)
+
+        x,y,w = self.goal
+
+        self.points.append([x,y,-random.randint(1,10)])
+        header = Header(frame_id = "map", stamp = rospy.Time.now())
+        msg = point_cloud2.create_cloud_xyz32(header, self.points)
+        self.point_pub.publish(msg)
+
+        if (w == 1 and x+self.measure_dist > self.origin[0]+self.width) or (w == -1 and x-self.measure_dist < self.origin[0]):
+            y += self.measure_dist
+            w *= -1
+        else:
+            x += self.measure_dist*w
+        self.goal = (x,y,w)
+        if y <= self.origin[1]+self.height:
+            self.next()
 
     #get current position in map
     def gps_callback(self, data):
@@ -102,13 +167,32 @@ class MeasurementsPub:
     '''
     #save depth at current position
     def depth_callback(self,data):
+        self.depth = data.range
+        return
+
         if self.hasMap and self.hasPosition and self.position >= 0:
             self.depth[self.position] = data.range
             self.visited[self.position] = 1
 
     #get map metadata
     def map_callback(self, data):
+        msg = PolygonStamped()
+        msg.header.frame_id = "map"
+        msg.header.stamp = rospy.Time.now()
+        origin_x, origin_y = self.origin
+        msg.polygon.points = [Point32(x, y, 0) for (x, y) in [
+            (origin_x, origin_y),
+            (origin_x+self.width, origin_y),
+            (origin_x+self.width, origin_y+self.height),
+            (origin_x, origin_y+self.height)
+            ]]
+
+        self.grid = np.array(data.data).reshape((data.info.width, data.info.height))
+        self.aera_pub.publish(msg)
+
         self.info = data.info
+        self.next()
+
         width = self.info.width
         height = self.info.height
         if not self.hasMap:
