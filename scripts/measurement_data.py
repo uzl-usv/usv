@@ -9,7 +9,7 @@ from sensor_msgs.msg import Range, NavSatFix, PointCloud2
 from nav_msgs.msg import OccupancyGrid
 from move_base_msgs.msg import MoveBaseActionResult, MoveBaseAction, MoveBaseGoal
 from actionlib_msgs.msg import GoalStatus
-from geometry_msgs.msg import PolygonStamped, Point32
+from geometry_msgs.msg import PolygonStamped, Point32, PoseStamped
 from geopy.distance import vincenty
 from nav_msgs.msg import MapMetaData
 from actionlib.simple_action_client import SimpleActionClient
@@ -20,14 +20,17 @@ import math
 
 class MeasurementsPub:
     def __init__(self, s, lat, lon):
-        self.aera_pub = rospy.Publisher("/measurement_area", PolygonStamped, queue_size=10)
+        self.area_pub = rospy.Publisher("/measurement_area", PolygonStamped, queue_size=10)
+
         self.origin = (-140, -40)
         self.goal = (self.origin[0], self.origin[1], 1)
         self.measure_dist = 5
         self.width = 25
         self.height = 10
+
         self.orig_lat = lat
         self.orig_lon = lon
+
         self.move_base = SimpleActionClient("move_base", MoveBaseAction)
         self.point_pub = rospy.Publisher('/measurements', PointCloud2, queue_size=10)
         self.points = []
@@ -101,7 +104,22 @@ class MeasurementsPub:
 
         print("grid", self.grid_cell(x, y))
     
+        self.publish_area()
         self.move_base.send_goal(goal, self.goal_callback)
+
+    def next_goal(self, goal):
+        x,y,w = goal
+
+        if (w == 1 and x+self.measure_dist > self.origin[0]+self.width) or (w == -1 and x-self.measure_dist < self.origin[0]):
+            y += self.measure_dist
+            w *= -1
+        else:
+            x += self.measure_dist*w
+
+        if self.grid_cell(x, y) > 0:
+            return self.next_goal((x, y, w))
+        else:
+            return (x, y, w)
 
     def goal_callback(self, status, result):
         print("goal reached", status, result)
@@ -113,12 +131,8 @@ class MeasurementsPub:
         msg = point_cloud2.create_cloud_xyz32(header, self.points)
         self.point_pub.publish(msg)
 
-        if (w == 1 and x+self.measure_dist > self.origin[0]+self.width) or (w == -1 and x-self.measure_dist < self.origin[0]):
-            y += self.measure_dist
-            w *= -1
-        else:
-            x += self.measure_dist*w
-        self.goal = (x,y,w)
+        self.goal = self.next_goal(self.goal)
+
         if y <= self.origin[1]+self.height:
             self.next()
 
@@ -171,8 +185,7 @@ class MeasurementsPub:
             self.depth[self.position] = data.range
             self.visited[self.position] = 1
 
-    #get map metadata
-    def map_callback(self, data):
+    def publish_area(self):
         msg = PolygonStamped()
         msg.header.frame_id = "map"
         msg.header.stamp = rospy.Time.now()
@@ -183,15 +196,20 @@ class MeasurementsPub:
             (origin_x+self.width, origin_y+self.height),
             (origin_x, origin_y+self.height)
             ]]
+        self.area_pub.publish(msg)
 
-        self.grid = np.array(data.data).reshape((data.info.width, data.info.height))
-        self.aera_pub.publish(msg)
+    #get map metadata
+    def map_callback(self, data):
 
         self.info = data.info
-        self.next()
-
         width = self.info.width
         height = self.info.height
+
+        self.grid = np.matrix(np.array(data.data).reshape((height,width))).transpose()
+
+        self.move_base.wait_for_server()
+        self.next()
+
         if not self.hasMap:
             self.visited = [0] * (height*width)
             for i in range(height*width):
