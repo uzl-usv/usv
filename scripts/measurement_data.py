@@ -74,7 +74,8 @@ class MeasurementsPub:
     def grid_cell(self, wx, wy):
         mx = int((wx - self.info.origin.position.x) / self.info.resolution)
         my = int((wy - self.info.origin.position.y) / self.info.resolution)
-        return self.grid[mx,my]
+        return int(np.floor(mx)+(np.floor(my))*self.info.width)
+        #return self.grid[mx,my]
 
     def save(self):
         with open(self.fileName + "_depth.json", "w") as write_file:
