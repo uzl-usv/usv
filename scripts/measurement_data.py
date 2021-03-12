@@ -19,14 +19,15 @@ import math
 
 
 class MeasurementsPub:
-    def __init__(self, s):
+    def __init__(self, s, lat, lon):
         self.aera_pub = rospy.Publisher("/measurement_area", PolygonStamped, queue_size=10)
         self.origin = (-140, -40)
         self.goal = (self.origin[0], self.origin[1], 1)
         self.measure_dist = 5
         self.width = 25
         self.height = 10
-
+        self.orig_lat = lat
+        self.orig_lon = lon
         self.move_base = SimpleActionClient("move_base", MoveBaseAction)
         self.point_pub = rospy.Publisher('/measurements', PointCloud2, queue_size=10)
         self.points = []
@@ -120,17 +121,14 @@ class MeasurementsPub:
         if y <= self.origin[1]+self.height:
             self.next()
 
-    #get current position in map
-    def gps_callback(self, data):
+    #calculates cell from gps data
+    def gps_to_cell(self, lat, lon):
         #calculate position in grid from position of the boat
-        if self.hasMap and self.info.resolution != 0:
-            #gps coordinates of the bottom left corner of the map
-            orig_lat = -30.0486235837
-            orig_lon = -51.2365778088
+        if self.hasMap == True and self.info.resolution != 0:
             #distance in metres between current position and bottom left corner of the map
-            if not(data.latitude < orig_lat or data.longitude < orig_lon):
-                dist_lat = vincenty((orig_lat,orig_lon), (data.latitude,orig_lon)).m
-                dist_lon = vincenty((orig_lat,orig_lon), (orig_lat,data.longitude)).m
+            if not(data.latitude < self.lat or data.longitude < self.lon):
+                dist_lat = vincenty((self.lat,self.lon), (lat,self.lon)).m
+                dist_lon = vincenty((self.lat,self.lon), (self.lat,lon)).m
                 '''
                 sig_lat = -1
                 sig_lon = -1
@@ -145,11 +143,9 @@ class MeasurementsPub:
                 print("\nDistanz in y-Richtung: ", dist_lon)
                 #calculate position in grid
                 print("\nPosition:")
-                self.position = int(np.floor(x/self.info.resolution)+(np.floor(y/self.info.resolution))*self.info.width)
-                print(self.position)
-                self.hasPosition = True
+                return int(np.floor(x/self.info.resolution)+(np.floor(y/self.info.resolution))*self.info.width)
             else:
-                self.position = -1
+                return -1
     
     '''
     def position_callback(self, data):
@@ -208,7 +204,7 @@ class MeasurementsPub:
     
 def listener():
     rospy.init_node('measurements_listener', anonymous=True)
-    MeasurementsPub(sys.argv[1])
+    MeasurementsPub(sys.argv[1], sys.argv[2], sys.argv[3])
     rospy.spin()
 
 if __name__ == '__main__':
