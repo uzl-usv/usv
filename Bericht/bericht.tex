@@ -12,8 +12,50 @@
 \usepackage{textcomp}
 \usepackage{xcolor}
 \usepackage{url}
+
+\renewcommand{\figurename}{Abbildung}
+
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+\newcommand\YAMLcolonstyle{\color{red}\mdseries}
+\newcommand\YAMLkeystyle{\color{black}\bfseries}
+\newcommand\YAMLvaluestyle{\color{blue}\mdseries}
+
+\makeatletter
+
+% here is a macro expanding to the name of the language
+% (handy if you decide to change it further down the road)
+\newcommand\language@yaml{yaml}
+
+\expandafter\expandafter\expandafter\lstdefinelanguage
+\expandafter{\language@yaml}
+{
+  keywords={true,false,null,y,n},
+  keywordstyle=\color{darkgray}\bfseries,
+  basicstyle=\YAMLkeystyle,                                 % assuming a key comes first
+  sensitive=false,
+  comment=[l]{\#},
+  morecomment=[s]{/*}{*/},
+  commentstyle=\color{purple}\ttfamily,
+  stringstyle=\YAMLvaluestyle\ttfamily,
+  moredelim=[l][\color{orange}]{\&},
+  moredelim=[l][\color{magenta}]{*},
+  moredelim=**[il][\YAMLcolonstyle{:}\YAMLvaluestyle]{:},   % switch to value style at :
+  morestring=[b]',
+  morestring=[b]",
+  literate =    {---}{{\ProcessThreeDashes}}3
+                {>}{{\textcolor{red}\textgreater}}1     
+                {|}{{\textcolor{red}\textbar}}1 
+                {\ -\ }{{\mdseries\ -\ }}3,
+}
+
+% switch to key style at EOL
+\lst@AddToHook{EveryLine}{\ifx\lst@language\language@yaml\YAMLkeystyle\fi}
+\makeatother
+
+\newcommand\ProcessThreeDashes{\llap{\color{cyan}\mdseries-{-}-}}
+
 \begin{document}
 
 \title{Projektarbeit: Unmanned Surface Vehicle}
@@ -91,7 +133,7 @@ Der Master-Branch des Simulators benutzt ROS Kinetic. Da auf dem USV aber moment
 \subsection{Einarbeitung in die Simulationsumgebung}
 
 Da das Projekt nicht optimal dokumentiert ist, hat die Einarbeitung in den Simulator mehr Zeit in Anspruch genommen, als ursprünglich gedacht. Der Übersichtlichkeit halber wollen wir hier einen Überblick über die Bestandteile geben, die für unser Projekt angepasst wurden:\\
-Die Simulationsumgebung stellt 4 verschiedene Boot-Modelle bereit: ein Airboot, ein Differentialboot, ein Ruderboot und ein Segelboot \cite{paravisi2019}. Wir haben das Differentialboot-Modell als Grundlage für unser Modell genommen, da es sich bei unserem USV ebenfalls um ein Boot mit 2 Motoren am Heck (s. Figure \ref{boot}) handelt. Wir haben 2 Dateien identifiziert, die das Boot modellieren: \texttt{diffboat.xacro}\footnote{\url{https://github.com/disaster-robotics-proalertas/usv_sim_lsa/blob/master/usv_sim/xacro/diffboat.xacro}} (modelliert unter anderem die Motoren) und \texttt{boat\_subdivided\_validated.xacro}\footnote{\url{https://github.com/disaster-robotics-proalertas/usv_sim_lsa/blob/master/usv_sim/xacro/boat_subdivided_validated.xacro}} (modelliert unter anderem Sensoren). Diese Dateien wurden angepasst, um unser Boot zu modellieren.
+Die Simulationsumgebung stellt 4 verschiedene Boot-Modelle bereit: ein Airboot, ein Differentialboot, ein Ruderboot und ein Segelboot \cite{paravisi2019}. Wir haben das Differentialboot-Modell als Grundlage für unser Modell genommen, da es sich bei unserem USV ebenfalls um ein Boot mit 2 Motoren am Heck (s. Abbildung \ref{boot}) handelt. Wir haben 2 Dateien identifiziert, die das Boot modellieren: \texttt{diffboat.xacro}\footnote{\url{https://github.com/disaster-robotics-proalertas/usv_sim_lsa/blob/master/usv_sim/xacro/diffboat.xacro}} (modelliert unter anderem die Motoren) und \texttt{boat\_subdivided\_validated.xacro}\footnote{\url{https://github.com/disaster-robotics-proalertas/usv_sim_lsa/blob/master/usv_sim/xacro/boat_subdivided_validated.xacro}} (modelliert unter anderem Sensoren). Diese Dateien wurden angepasst, um unser Boot zu modellieren.
 
 Die Szenarien befinden sich im Ordner \texttt{scenes}. Durch die Bearbeitung der XML-Dateien kann man z.B. die Anzahl und Positionen der Boote und Bojen, die Position und Art des Terrains und die Position der Kamera anpassen.\\
 Ebenfalls hilfreich für die Erstellung neuer Szenarien sind die launch-Dateien in den folgenden Ordnern:
@@ -114,10 +156,11 @@ Auf dem Boot sind mehrere Sensoren zu finden:
 	\item ein Temperatursensor
 \end{itemize}
 
-Darüber hinaus verfügt das Boot noch über 2 Motoren für die Fortbewegung und eine 4G/WIFI-Anbindung zur Kommunikation (s. Figure \ref{boot}).\\
+Darüber hinaus verfügt das Boot noch über 2 Motoren für die Fortbewegung und eine 4G/WIFI-Anbindung zur Kommunikation (s. Abbildung \ref{boot}).\\
 
 \begin{figure}
-	\includegraphics[width=\linewidth]{boot.png}
+    \centering
+	\includegraphics[width=0.9\linewidth]{boot.png}
 	\caption{Sensoren und Aktuatoren des Bootes}
 	\label{boot}
 \end{figure}
@@ -125,13 +168,13 @@ Darüber hinaus verfügt das Boot noch über 2 Motoren für die Fortbewegung und
 Detaillierte Informationen zu allen Sensoren und Aktuatoren des Bootes und den erwarteten Ein- und Ausgabewerten lassen sich im zugehörigen GitHub-Projekt finden \footnote{\url{https://github.com/NRottmann/UzL_USV/}}.
 Für die Implementierung unseres Szenarios in der Simulation benötigten wir die GPS-, Kompass- und Ultraschalldaten und die Motoren. Deshalb haben wir ein GPS-Modul und zwei Ultraschall-Sensoren zum Differentialboot-Modell des Simulators hinzugefügt. Außerdem haben wir das Modell durch eine IMU zur Simulierung der Orientierung ergänzt. Dazu haben wir die GazeboRosGps, GazeboRosImu und GazeboRosSonar Plugins aus dem Paket \texttt{hector\_gazebo\_plugins}  \footnote{\url{https://github.com/tu-darmstadt-ros-pkg/hector_gazebo}} verwendet.
 
-\begin{figure}
-	\includegraphics[width=\linewidth]{reference.png}
-	\caption{Referenzkoordinaten}
-	\label{reference}
-\end{figure}
+%\begin{figure}
+%	\includegraphics[width=\linewidth]{reference.png}
+%	\caption{Referenzkoordinaten}
+%	\label{reference}
+%\end{figure}
 
-Da wir für unser Szenario weitestgehend das \texttt{diffboat\_scenario1} übernommen haben (das einen Ausschnitt von Porto Alegre, Brasilien, nahe der Mündung des Dilúvio zeigt \cite{paravisi2019}), haben wir die GPS-Koordinaten eines markanten Punktes im Szenario bestimmt und als Referenzkoordinaten für die Simulierung der GPS-Daten gewählt (s. Figure \ref{reference}).
+Da wir für unser Szenario weitestgehend das \texttt{diffboat\_scenario1} übernommen haben (das einen Ausschnitt von Porto Alegre, Brasilien, nahe der Mündung des Dilúvio zeigt \cite{paravisi2019}), haben wir die GPS-Koordinaten eines markanten Punktes im Szenario bestimmt und als Referenzkoordinaten für die Simulierung der GPS-Daten gewählt (s. Abbildung \ref{reference}).
 
 \subsection{Simulation der Ausgaben des Bootes}
 
@@ -171,7 +214,7 @@ Auf das Publishen der folgenden Topics haben wir vorerst verzichtet, da diese f�
 
 \subsection{Implementierung der Schnittstellen zum Navigation Stack}
 
-In Figure \ref{nav} zu kann man mehrere Topics erkennen, die als Schnittstellen zwischen Roboter und Navigation Stack fungieren:
+In Abbildung \ref{nav} zu kann man mehrere Topics erkennen, die als Schnittstellen zwischen Roboter und Navigation Stack fungieren:
 \begin{itemize}
 	\item \texttt{odom}
 	\item \texttt{map}
@@ -198,7 +241,7 @@ Im Folgenden soll es darum gehen, wie wir die Werte der Topics generiert bzw. ve
 Der Navigation Stack benötigt 2 Transformationen um zu funktionieren, eine vom \texttt{map}-Frame zum \texttt{odom}-Frame und eine vom \texttt{odom}-Frame zum \texttt{base\_link}-Frame. Wie in \texttt{REP-105} \cite{REP105} spezifiziert, ist das \texttt{map}-Frame ein statisches Weltkoordinatensystem, welches die Position des Bootes in kartesischen Koordinaten auf der Karte darstellt.  Das \texttt{odom}-Frame ist ebenfalls ein statisches Koordinatensystem, in dem durch Auswertung der Odometrie die theoretische Position des Bootes bestimmt wird, welche zwar von der echten Position stark abweichen kann, aber dennoch eine genauere Lokalisierung ermöglicht.
 
 Für die Erstellung dieser Transformationen setzen wir das \texttt{robot\_localization} \footnote{\url{http://wiki.ros.org/robot_localization}} Paket ein, welches die nötigen Transformationen bereits zur Verfügung stellt, GPS Koordinaten in Weltkoordinaten umrechnet und Sensorinformationen mit einem Kalman-Filter zusammenfügt \cite{MooreStouchKeneralizedEkf2014}.\\
-Der komplette Transformations-Tree einschließlich der statischen Transformationen ist in Figure \ref{frames} zu sehen.
+Der komplette Transformations-Tree einschließlich der statischen Transformationen ist in Abbildung \ref{frames} zu sehen.
 
 Für die Transformation vom \texttt{odom}- zum \texttt{base\_link}-Frame nutzen wir den \texttt{ekf\_localization\_node}. Dieser kann Messages der Form:
 \begin{itemize}
@@ -212,7 +255,13 @@ In unserem Fall wird die Geschwindigkeit in Bewegungsrichtung (\texttt{velocity}
 Außerdem benutzen wir \texttt{mag\_heading} und die aus der Ableitung von \texttt{mag\_heading} berechnete Winkelgeschwindigkeit zur Erzeugung einer IMU-Message.\\
 Obwohl wir bei der Orientierung nach Kompass (\texttt{mag\_heading}) in Bewegung eine ungenauere Näherung an die Bewegungsrichtung erwarten, als die Orientierung nach GPS (\texttt{gps\_heading}) liefern würde, haben wir uns für die Verwendung von \texttt{mag\_heading} entschieden, da für die Berechnung der Odometrie kontinuierliche Daten erwartet werden \cite{REP105}. Bei \texttt{gps\_heading} kann es im Gegensatz zu \texttt{mag\_heading} zu diskreten Sprüngen kommen.\\
 
-Für die Lokalisierung im Weltkoordinatensystem (also im \texttt{map}-Frame) wurde ebenfalls ein \texttt{ekf\_localization\_node} aufgesetzt. Dieser bekommt eine Odom-Message von einem \texttt{navsat\_transform\_node} \footnote{\url{http://docs.ros.org/en/noetic/api/robot_localization/html/navsat_transform_node.html}}, der die Daten vom Topic \texttt{gps} entsprechend umwandelt. Dieser Node benötigt dafür ebenfalls die vorhin schon beschriebene Imu-Message.
+Für die Lokalisierung im Weltkoordinatensystem (also im \texttt{map}-Frame) wurde ebenfalls ein \texttt{ekf\_localization\_node} aufgesetzt. Dieser bekommt eine Odom-Message von einem \texttt{navsat\_transform\_node} \footnote{\url{http://docs.ros.org/en/noetic/api/robot_localization/html/navsat_transform_node.html}}, der die Daten vom Topic \texttt{gps} entsprechend umwandelt.
+
+\begin{figure}
+	\includegraphics[width=\linewidth]{localization.png}
+	\caption{Localization Nodes}
+	\label{localization-overview}
+\end{figure}
 
 \subsubsection{odom}
 Auf das Topic \texttt{/odom} schreiben wir die aktuellen Geschwindigkeiten des Bootes. Da wir die Frame ID des Bootes als \texttt{base\_link} festgelegt haben, müssen die Position und Orientierung für die Odometrie nicht extra ausgerechnet werden. Als Geschwindigkeit kann \texttt{velocity} übergeben werden.
@@ -220,7 +269,8 @@ Auf das Topic \texttt{/odom} schreiben wir die aktuellen Geschwindigkeiten des B
 \subsubsection{map}
 
 \begin{figure}
-	\includegraphics[width=\linewidth]{diluvio.jpg}
+    \centering
+	\includegraphics[width=0.7\linewidth]{diluvio.jpg}
 	\caption{Simulierte Region, © OpenStreetMap-Mitwirkende}
 	\label{diluvio}
 \end{figure}
@@ -229,6 +279,7 @@ Für den Map Server haben wir je eine schwarz-weiß Karte der in der Simulation 
 Wichtige Informationen über die Karte, wie die Anzahl der Meter pro Pixel, sowie die Platzierung der linken unteren Ecke in der Simulationsumgebung haben wir berechnet und in einer yaml-Datei gespeichert.
 
 \subsubsection{move\_base\_simple/goal}
+
 \subsubsection{Sensor Topics}
 \subsubsection{cmd\_vel} \label{cmd}
 Die Werte aus \texttt{cmd\_vel} werden in Übereinstimmung mit den vom Boot erwarteten Werten in dem Skript \texttt{boat\_diff\_vel\_ctrl} in Werte zwischen -100 und 100 umgewandelt.
@@ -237,7 +288,7 @@ Die Werte aus \texttt{cmd\_vel} werden in Übereinstimmung mit den vom Boot erwa
 
 Die tatsächliche Navigation zu den Wegpunkten ist nach Implementierung der Schnittstellen Aufgabe des Navigation Stacks (durch das Publishen des Topics \texttt{cmd\_vel}).\\
 In Testläufen mit reiner Verarbeitung der \texttt{cmd\_vel}-Werte konnte kein sicheres Anfahren der Zielpunkte erreicht werden, obwohl mehrere lokale Planer mit unterschiedlichen Parametern ausprobiert wurden. Der stabilste Planer schien der \texttt{teb\_local\_planner} \footnote{\url{http://wiki.ros.org/teb_local_planner}} zu sein, weshalb wir uns letztendlich für diesen entschieden haben. Die Parameter, die von den Standardeinstellungen abweichen, sind in Listing \ref{local-planner} zu sehen.\\
-\lstinputlisting[label={local-planner}, caption={Parameter des lokalen Planers}]{../base_local_planner_params.yaml}
+\lstinputlisting[label={local-planner}, caption={Parameter des lokalen Planers}, language=yaml]{../base_local_planner_params.yaml}
 Wir vermuteten als Grund für die mäßige Leistung der lokalen Planer, dass das vom Navigation Stack geforderte Verhalten im Wasser später auftritt, als es an Land der Fall wäre und vom Navigation Stack erwartet wird. Daraufhin haben wir die Verarbeitung des Topics noch durch zwei PI-Regler ergänzt. Einer der Regler gleicht die lineare Geschwindigkeit an, der andere die Winkelgeschwindigkeit.
 \subsection{Vermeidung dynamischer Hindernisse}
 \subsection{Erstellung von Wegpunkten auf Basis der Karte}
