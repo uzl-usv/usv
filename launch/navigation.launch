@@ -1,5 +1,6 @@
 <launch>
     <node pkg="boot" type="imu_pub.py" name="imu_pub"/>
+    <node pkg="boot" type="odometry_pub.py" name="odometry_pub"/>
 
     <node pkg="robot_localization" type="ekf_localization_node"
           name="robot_localization_ekf_node_odom"
@@ -42,6 +43,8 @@
 
         <param name="two_d_mode" value="true" />
         <param name="publish_tf" value="true" />
+
+       <!-- <param name="transform_time_offset" value="1" />-->
 
         <remap from="odometry/filtered" to="odometry/filtered_map"/>
 
