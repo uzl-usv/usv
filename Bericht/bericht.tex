@@ -210,7 +210,7 @@ Beide Winkelangaben haben wir noch so angepasst, dass statt bei einer Orientieru
 
 \begin{figure}
 	\centering
-	\includegraphics[width=0.7\linewidth]{simulation-nodes.jpg}
+	\includegraphics[width=0.7\linewidth]{simulation-nodes}
 	\caption{Nodes zur Simulierung der Ausgaben des Bootes}
 	\label{output-sim-nodes}
 \end{figure}
@@ -269,7 +269,7 @@ Obwohl wir bei der Orientierung nach Kompass (\texttt{mag\_heading}) in Bewegung
 Für die Lokalisierung im Weltkoordinatensystem (also im \texttt{map}-Frame) wurde ebenfalls ein \texttt{ekf\_localization\_node} aufgesetzt. Dieser bekommt eine Odom-Message von einem \texttt{navsat\_transform\_node} \footnote{\url{http://docs.ros.org/en/noetic/api/robot_localization/html/navsat_transform_node.html}}, der die Daten vom Topic \texttt{gps} entsprechend umwandelt. Eine Übersicht der genutzten Nodes ist in Abbildung \ref{localization-overview} zu sehen.
 
 \begin{figure}
-	\includegraphics[width=\linewidth]{localization.png}
+	\includegraphics[width=\linewidth]{localization-nodes}
 	\caption{Localization Nodes}
 	\label{localization-overview}
 \end{figure}
