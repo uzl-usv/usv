@@ -144,7 +144,7 @@ class MeasurementsPub:
             self.next()
 
     def safety_callback(self, data):
-        if data.battery <= 20:
+        if data.battery <= 20 or data.water == 1:
             print("Battery low")
             goal = MoveBaseGoal()
             goal.target_pose.header.frame_id = "map"
