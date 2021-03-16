@@ -4,6 +4,7 @@ import json
 import sys
 import random
 from std_msgs.msg import Header
+from boot.msg import Safety
 from sensor_msgs import point_cloud2
 from sensor_msgs.msg import Range, NavSatFix, PointCloud2
 from nav_msgs.msg import OccupancyGrid
@@ -19,23 +20,26 @@ import math
 
 
 class MeasurementsPub:
-    def __init__(self, file_name, origin_lat, origin_lon, start_lat, start_lon, height, width, dist):
+    def __init__(self, file_name, origin_lat, origin_lon, start_lat, start_lon, home_lat, home_lon, height, width, dist):
         self.area_pub = rospy.Publisher("/measurement_area", PolygonStamped, queue_size=10)
 
         self.origin = (-140, -40)
         self.goal = (self.origin[0], self.origin[1], 1)
-        self.measure_dist = dist
-        self.width = width
-        self.height = height
+        self.measure_dist = float(dist)
+        self.width = float(width)
+        self.height = float(height)
 
-        self.origin_lat = origin_lat
-        self.origin_lon = origin_lon
-        self.start_lat = start_lat
-        self.start_lon = start_lon
+        self.origin_lat = float(origin_lat)
+        self.origin_lon = float(origin_lon)
+        self.start_lat = float(start_lat)
+        self.start_lon = float(start_lon)
+        self.home_lat = float(home_lat)
+        self.home_lon = float(home_lon)
 
         self.move_base = SimpleActionClient("move_base", MoveBaseAction)
         self.point_pub = rospy.Publisher('/measurements', PointCloud2, queue_size=10)
         self.points = []
+        self.return_home = False
 
         #get position
         #rospy.Subscriber("/gps", NavSatFix, self.gps_callback)
@@ -44,6 +48,7 @@ class MeasurementsPub:
         rospy.Subscriber("/range_depth", Range, self.depth_callback)
         #get map data
         rospy.Subscriber("/map", OccupancyGrid, self.map_callback)
+        rospy.Subscriber("/diffboat/safety", Safety, self.safety_callback)
 
 #        rospy.Subscriber("/move_base/result", MoveBaseActionResult, self.goal_callback)
 
@@ -79,8 +84,8 @@ class MeasurementsPub:
     def grid_cell(self, wx, wy):
         mx = int((wx - self.info.origin.position.x) / self.info.resolution)
         my = int((wy - self.info.origin.position.y) / self.info.resolution)
-        return int(np.floor(mx)+(np.floor(my))*self.info.width)
-        #return self.grid[mx,my]
+        #return int(np.floor(mx)+(np.floor(my))*self.info.width)
+        return self.grid[mx,my]
 
     def save(self):
         with open(self.fileName + "_depth.json", "w") as write_file:
@@ -89,29 +94,29 @@ class MeasurementsPub:
             json.dump(self.visited, write_file)
 
     def next(self):
-        goal = MoveBaseGoal()
-        goal.target_pose.header.frame_id = "map"
-        goal.target_pose.header.stamp = rospy.Time.now()
+        if not self.return_home:
+            goal = MoveBaseGoal()
+            goal.target_pose.header.frame_id = "map"
+            goal.target_pose.header.stamp = rospy.Time.now()
 
-        x, y, d = self.goal
-        heading = 0 if d == 1 else np.pi
+            x, y, d = self.goal
+            heading = 0 if d == 1 else np.pi
 
-        qx, qy, qz, qw = quaternion_from_euler(0, 0, heading)
-        goal.target_pose.pose.position.x = x
-        goal.target_pose.pose.position.y = y
-        goal.target_pose.pose.orientation.x = qx
-        goal.target_pose.pose.orientation.y = qy
-        goal.target_pose.pose.orientation.z = qz
-        goal.target_pose.pose.orientation.w = qw
+            qx, qy, qz, qw = quaternion_from_euler(0, 0, heading)
+            goal.target_pose.pose.position.x = x
+            goal.target_pose.pose.position.y = y
+            goal.target_pose.pose.orientation.x = qx
+            goal.target_pose.pose.orientation.y = qy
+            goal.target_pose.pose.orientation.z = qz
+            goal.target_pose.pose.orientation.w = qw
 
-        print("grid", self.grid_cell(x, y))
+            print("grid", self.grid_cell(x, y))
     
-        self.publish_area()
-        self.move_base.send_goal(goal, self.goal_callback)
+            self.publish_area()
+            self.move_base.send_goal(goal, self.goal_callback)
 
     def next_goal(self, goal):
         x,y,w = goal
-
         if (w == 1 and x+self.measure_dist > self.origin[0]+self.width) or (w == -1 and x-self.measure_dist < self.origin[0]):
             y += self.measure_dist
             w *= -1
@@ -138,29 +143,44 @@ class MeasurementsPub:
         if y <= self.origin[1]+self.height:
             self.next()
 
+    def safety_callback(self, data):
+        if data.battery <= 20:
+            print("Battery low")
+            goal = MoveBaseGoal()
+            goal.target_pose.header.frame_id = "map"
+            goal.target_pose.header.stamp = rospy.Time.now()
+
+            x, y = self.gps_to_cell(self.home_lat, self.home_lon)
+            print("x: ",x, "y: ", y)
+            heading = 0
+
+            qx, qy, qz, qw = quaternion_from_euler(0, 0, heading)
+            goal.target_pose.pose.position.x = x
+            goal.target_pose.pose.position.y = y
+            goal.target_pose.pose.orientation.x = qx
+            goal.target_pose.pose.orientation.y = qy
+            goal.target_pose.pose.orientation.z = qz
+            goal.target_pose.pose.orientation.w = qw
+            self.move_base.send_goal(goal)
+            self.return_home = True
+            self.move_base.wait_for_result()
+
+
     #calculates cell from gps data
     def gps_to_cell(self, lat, lon):
-        #calculate position in grid from position of the boat
+        #calculate position in map frame
         if self.hasMap == True and self.info.resolution != 0:
             #distance in metres between current position and bottom left corner of the map
-            if not(data.latitude < self.lat or data.longitude < self.lon):
-                dist_lat = vincenty((self.lat,self.lon), (lat,self.lon)).m
-                dist_lon = vincenty((self.lat,self.lon), (self.lat,lon)).m
-                '''
-                sig_lat = -1
-                sig_lon = -1
-                if data.latitude < orig_lat:
-                    sig_lat = 1
-                if data.longitude < orig_lon:
-                    sig_lon = 1
-                '''
-                x = dist_lat
-                y = dist_lon
-                print("\nDistanz in x-Richtung: ", dist_lat)
-                print("\nDistanz in y-Richtung: ", dist_lon)
-                #calculate position in grid
-                print("\nPosition:")
-                return int(np.floor(x/self.info.resolution)+(np.floor(y/self.info.resolution))*self.info.width)
+            if not(lat < self.origin_lat or lon < self.origin_lon):
+                dist_lat = vincenty((self.origin_lat, self.origin_lon), (lat, self.origin_lon)).m
+                dist_lon = vincenty((self.origin_lat, self.origin_lon), (self.origin_lat, lon)).m
+                print("dist lat: ", dist_lat)
+                print("dist lon: ", dist_lon)
+                x = dist_lon
+                y = dist_lat
+                print("origin x: ", self.info.origin.position.x)
+                print("origin y: ", self.info.origin.position.y)
+                return (x+self.info.origin.position.x, y+self.info.origin.position.y)
             else:
                 return -1
     
@@ -226,8 +246,8 @@ class MeasurementsPub:
         
     
 def listener():
-    rospy.init_node('measurements_listener', anonymous=True)
-    MeasurementsPub(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6], sys.argv[7], sys.argv[8])
+    rospy.init_node('measurements_listener', anonymous=True, disable_signals=True)
+    MeasurementsPub(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6], sys.argv[7], sys.argv[8], sys.argv[9], sys.argv[10])
     rospy.spin()
 
 if __name__ == '__main__':
