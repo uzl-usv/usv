@@ -19,17 +19,19 @@ import math
 
 
 class MeasurementsPub:
-    def __init__(self, s, lat, lon):
+    def __init__(self, file_name, origin_lat, origin_lon, start_lat, start_lon, height, width, dist):
         self.area_pub = rospy.Publisher("/measurement_area", PolygonStamped, queue_size=10)
 
         self.origin = (-140, -40)
         self.goal = (self.origin[0], self.origin[1], 1)
-        self.measure_dist = 5
-        self.width = 25
-        self.height = 10
+        self.measure_dist = dist
+        self.width = width
+        self.height = height
 
-        self.orig_lat = lat
-        self.orig_lon = lon
+        self.origin_lat = origin_lat
+        self.origin_lon = origin_lon
+        self.start_lat = start_lat
+        self.start_lon = start_lon
 
         self.move_base = SimpleActionClient("move_base", MoveBaseAction)
         self.point_pub = rospy.Publisher('/measurements', PointCloud2, queue_size=10)
@@ -46,7 +48,7 @@ class MeasurementsPub:
 #        rospy.Subscriber("/move_base/result", MoveBaseActionResult, self.goal_callback)
 
         #No known position and map in the beginning
-        self.fileName = s
+        self.fileName = file_name
         self.hasPosition = False
         self.position = -1
         self.hasMap = False
@@ -189,7 +191,9 @@ class MeasurementsPub:
         msg = PolygonStamped()
         msg.header.frame_id = "map"
         msg.header.stamp = rospy.Time.now()
-        origin_x, origin_y = self.origin
+        #origin_x, origin_y = self.origin
+        origin_x = np.floor(vincenty((self.origin_lat,self.origin_lon), (self.start_lat,self.origin_lon)).m/self.info.resolution)
+        origin_y = np.floor(vincenty((self.origin_lat,self.origin_lon), (self.origin_lat,self.start_lon)).m/self.info.resolution)
         msg.polygon.points = [Point32(x, y, 0) for (x, y) in [
             (origin_x, origin_y),
             (origin_x+self.width, origin_y),
@@ -223,7 +227,7 @@ class MeasurementsPub:
     
 def listener():
     rospy.init_node('measurements_listener', anonymous=True)
-    MeasurementsPub(sys.argv[1], sys.argv[2], sys.argv[3])
+    MeasurementsPub(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6], sys.argv[7], sys.argv[8])
     rospy.spin()
 
 if __name__ == '__main__':
