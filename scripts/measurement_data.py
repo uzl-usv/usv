@@ -35,7 +35,8 @@ class MeasurementsPub:
         self.start_lon = float(start_lon)
         self.home_lat = float(home_lat)
         self.home_lon = float(home_lon)
-
+        self.fileName = file_name
+        print("Parameters: ", self.fileName, self.origin_lat, self.origin_lon, self.start_lat, self.start_lon, self.home_lat, self.home_lon, self.height, self.width, self.measure_dist)
         self.move_base = SimpleActionClient("move_base", MoveBaseAction)
         self.point_pub = rospy.Publisher('/measurements', PointCloud2, queue_size=10)
         self.points = []
@@ -53,7 +54,6 @@ class MeasurementsPub:
 #        rospy.Subscriber("/move_base/result", MoveBaseActionResult, self.goal_callback)
 
         #No known position and map in the beginning
-        self.fileName = file_name
         self.hasPosition = False
         self.position = -1
         self.hasMap = False

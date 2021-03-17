@@ -1,4 +1,5 @@
 <launch>
     <include file="$(find boot)/launch/navigation.launch"/>
     <include file="$(find boot)/launch/move_base.launch"/>
-</launch> 
+    <node pkg="boot" type="measurement_data.py" name="measurements_listener" args="$(env file_name) $(env origin_lat) $(env origin_lon) $(env start_lat) $(env start_lon) $(env home_lat) $(env home_lon) $(env height) $(env width) $(env dist)"/>
+</launch>
