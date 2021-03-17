@@ -1,0 +1,14 @@
+origin:
+    lat: -30.048638
+    lon: -51.236690
+home:
+    lat: -30.047358
+    lon: -51.233064
+measurements:
+    file_name: /home/r/test1.json
+    start:
+        lat: -30.047311
+        lon: -51.234663
+    width: 15
+    height: 15
+    dist: 5

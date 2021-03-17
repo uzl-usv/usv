@@ -34,7 +34,7 @@
 
     <node pkg="robot_localization" type="ekf_localization_node"
           name="robot_localization_ekf_node_map"
-          clear_params="true" output="screen">
+          clear_params="true">
 
         <param name="map_frame" value="map" />
         <param name="odom_frame" value="odom" />
@@ -65,7 +65,7 @@
          false, false, false]</rosparam>
     </node>
 
-    <node pkg="robot_localization" type="navsat_transform_node" name="navsat_transform_node" respawn="true" output="screen">
+    <node pkg="robot_localization" type="navsat_transform_node" name="navsat_transform_node" respawn="true">
 
         <param name="wait_for_datum" value="true"/>
         <rosparam param="datum">[-30.047361, -51.232694, 0.0, map, base_link]</rosparam>

@@ -17,103 +17,94 @@ from actionlib.simple_action_client import SimpleActionClient
 from tf.transformations import quaternion_from_euler
 import numpy as np
 import math
+from datetime import datetime
 
 
 class MeasurementsPub:
-    def __init__(self, file_name, origin_lat, origin_lon, start_lat, start_lon, home_lat, home_lon, height, width, dist):
-        self.area_pub = rospy.Publisher("/measurement_area", PolygonStamped, queue_size=10)
+    def __init__(self):
+        self.measure_dist = rospy.get_param("usv/measurements/dist", 5)
+        self.width = rospy.get_param("usv/measurements/width", 15)
+        self.height = rospy.get_param("usv/measurements/height", 15)
 
-        self.origin = (-140, -40)
-        self.goal = (self.origin[0], self.origin[1], 1)
-        self.measure_dist = float(dist)
-        self.width = float(width)
-        self.height = float(height)
+        self.origin_lat = rospy.get_param("usv/origin/lat", -30.048638)
+        self.origin_lon = rospy.get_param("usv/origin/lon", -51.23669)
+        self.start_lat = rospy.get_param("usv/measurements/start/lat", -30.047311)
+        self.start_lon = rospy.get_param("usv/measurements/start/lon", -51.234663)
+        self.home_lat = rospy.get_param("usv/home/lat", -30.047358)
+        self.home_lon = rospy.get_param("usv/home/lon", -51.233064)
 
-        self.origin_lat = float(origin_lat)
-        self.origin_lon = float(origin_lon)
-        self.start_lat = float(start_lat)
-        self.start_lon = float(start_lon)
-        self.home_lat = float(home_lat)
-        self.home_lon = float(home_lon)
-        self.fileName = file_name
-        print("Parameters: ", self.fileName, self.origin_lat, self.origin_lon, self.start_lat, self.start_lon, self.home_lat, self.home_lon, self.height, self.width, self.measure_dist)
+        self.file_name = rospy.get_param("usv/measurements/file_name")
+
         self.move_base = SimpleActionClient("move_base", MoveBaseAction)
-        self.point_pub = rospy.Publisher('/measurements', PointCloud2, queue_size=10)
-        self.points = []
-        self.return_home = False
+        self.move_base.wait_for_server()
 
-        #get position
-        #rospy.Subscriber("/gps", NavSatFix, self.gps_callback)
-        #rospy.Subscriber("/tf", TransformStamped[], self.position_callback)
-        #get range
+        self.area_pub = rospy.Publisher("/measurement_area", PolygonStamped, queue_size=10)
+        self.point_pub = rospy.Publisher('/measurements', PointCloud2, queue_size=10)
+
+        self.measurements = []
+        self.points = []
+        self.returning_home = False
+
         rospy.Subscriber("/range_depth", Range, self.depth_callback)
-        #get map data
         rospy.Subscriber("/map", OccupancyGrid, self.map_callback)
         rospy.Subscriber("/diffboat/safety", Safety, self.safety_callback)
 
-#        rospy.Subscriber("/move_base/result", MoveBaseActionResult, self.goal_callback)
-
-        #No known position and map in the beginning
-        self.hasPosition = False
-        self.position = -1
-        self.hasMap = False
+        self.has_map = False
         self.info = MapMetaData()
-        self.visited = None
-        self.depth = None
-        try:
-            with open(self.fileName + "_depth.json", "r") as read_file:
-                try:
-                    self.depth = json.load(read_file)
-                    self.hasMap = True
-                except Exception as e:
-                    print("got %s on json.load()" % e)
-        except Exception as e:
-            print(e)
 
-        try:
-            with open(self.fileName + "_visited.json", "r") as read_file:
-                try:
-                    self.visited = json.load(read_file)
-                except Exception as e:
-                    print("got %s on json.load()" % e)
-        except Exception as e:
-            print(e)
+        self.load()
 
         rospy.on_shutdown(self.save)
 
     def grid_cell(self, wx, wy):
         mx = int((wx - self.info.origin.position.x) / self.info.resolution)
         my = int((wy - self.info.origin.position.y) / self.info.resolution)
-        #return int(np.floor(mx)+(np.floor(my))*self.info.width)
-        return self.grid[mx,my]
+
+        return self.grid[mx, my]
+
+    def load(self):
+        try:
+            with open(self.file_name, "r") as read_file:
+                json_data = json.load(read_file)
+                self.measurements = json_data["measurements"]
+                self.goal = json_data["goal"]
+        except Exception as e:
+            print(e)
 
     def save(self):
-        with open(self.fileName + "_depth.json", "w") as write_file:
-            json.dump(self.depth, write_file)
-        with open(self.fileName + "_visited.json", "w") as write_file:
-            json.dump(self.visited, write_file)
+        print("saving to", self.file_name)
+        with open(self.file_name, "w") as write_file:
+            json_data = {
+                "measurements" : self.measurements,
+                "goal": self.goal
+            }
+            json.dump(json_data, write_file)
 
     def next(self):
-        if not self.return_home:
-            goal = MoveBaseGoal()
-            goal.target_pose.header.frame_id = "map"
-            goal.target_pose.header.stamp = rospy.Time.now()
+        x, y, d = self.goal
 
-            x, y, d = self.goal
-            heading = 0 if d == 1 else np.pi
+        if self.returning_home:
+            return
+        if y > self.origin[1]+self.height:
+            self.return_home()
+            return
 
-            qx, qy, qz, qw = quaternion_from_euler(0, 0, heading)
-            goal.target_pose.pose.position.x = x
-            goal.target_pose.pose.position.y = y
-            goal.target_pose.pose.orientation.x = qx
-            goal.target_pose.pose.orientation.y = qy
-            goal.target_pose.pose.orientation.z = qz
-            goal.target_pose.pose.orientation.w = qw
+        goal = MoveBaseGoal()
+        goal.target_pose.header.frame_id = "map"
+        goal.target_pose.header.stamp = rospy.Time.now()
 
-            print("grid", self.grid_cell(x, y))
-    
-            self.publish_area()
-            self.move_base.send_goal(goal, self.goal_callback)
+        heading = 0 if d == 1 else np.pi
+
+        qx, qy, qz, qw = quaternion_from_euler(0, 0, heading)
+        goal.target_pose.pose.position.x = x
+        goal.target_pose.pose.position.y = y
+        goal.target_pose.pose.orientation.x = qx
+        goal.target_pose.pose.orientation.y = qy
+        goal.target_pose.pose.orientation.z = qz
+        goal.target_pose.pose.orientation.w = qw
+
+        self.publish_area()
+        self.move_base.send_goal(goal, self.goal_callback)
 
     def next_goal(self, goal):
         x,y,w = goal
@@ -129,91 +120,79 @@ class MeasurementsPub:
             return (x, y, w)
 
     def goal_callback(self, status, result):
-        print("goal reached", status, result)
+        x, y, w = self.goal
 
-        x,y,w = self.goal
+        self.measurements.append({
+              "depth": self.depth,
+              "timestamp": datetime.now().replace(microsecond=0).isoformat(),
+              "x": x,
+              "y": y
+            })
 
-        self.points.append([x,y,-random.randint(1,10)])
+        self.points.append([x, y, self.depth])
         header = Header(frame_id = "map", stamp = rospy.Time.now())
         msg = point_cloud2.create_cloud_xyz32(header, self.points)
         self.point_pub.publish(msg)
 
         self.goal = self.next_goal(self.goal)
+        
+        rospy.loginfo("Next goal %s", self.goal)
 
-        if y <= self.origin[1]+self.height:
-            self.next()
+        self.next()
+
+    def return_home(self):
+        rospy.loginfo("Returning home")
+        goal = MoveBaseGoal()
+        goal.target_pose.header.frame_id = "map"
+        goal.target_pose.header.stamp = rospy.Time.now()
+
+        x, y = self.gps_to_cell(self.home_lat, self.home_lon)
+        print("x: ",x, "y: ", y)
+        heading = 0
+
+        qx, qy, qz, qw = quaternion_from_euler(0, 0, heading)
+        goal.target_pose.pose.position.x = x
+        goal.target_pose.pose.position.y = y
+        goal.target_pose.pose.orientation.x = qx
+        goal.target_pose.pose.orientation.y = qy
+        goal.target_pose.pose.orientation.z = qz
+        goal.target_pose.pose.orientation.w = qw
+        self.move_base.send_goal(goal)
+        self.returning_home = True
+        self.move_base.wait_for_result()
 
     def safety_callback(self, data):
-        if data.battery <= 20 or data.water == 1:
-            print("Battery low")
-            goal = MoveBaseGoal()
-            goal.target_pose.header.frame_id = "map"
-            goal.target_pose.header.stamp = rospy.Time.now()
-
-            x, y = self.gps_to_cell(self.home_lat, self.home_lon)
-            print("x: ",x, "y: ", y)
-            heading = 0
-
-            qx, qy, qz, qw = quaternion_from_euler(0, 0, heading)
-            goal.target_pose.pose.position.x = x
-            goal.target_pose.pose.position.y = y
-            goal.target_pose.pose.orientation.x = qx
-            goal.target_pose.pose.orientation.y = qy
-            goal.target_pose.pose.orientation.z = qz
-            goal.target_pose.pose.orientation.w = qw
-            self.move_base.send_goal(goal)
-            self.return_home = True
-            self.move_base.wait_for_result()
-
+        if data.battery <= 20: 
+            rospy.logerr("Battery low")
+            self.return_home()
+        if data.water == 1:
+            rospy.logerr("Water in boat")
+            self.return_home()
 
     #calculates cell from gps data
     def gps_to_cell(self, lat, lon):
         #calculate position in map frame
-        if self.hasMap == True and self.info.resolution != 0:
+        if self.has_map == True and self.info.resolution != 0:
             #distance in metres between current position and bottom left corner of the map
             if not(lat < self.origin_lat or lon < self.origin_lon):
                 dist_lat = vincenty((self.origin_lat, self.origin_lon), (lat, self.origin_lon)).m
                 dist_lon = vincenty((self.origin_lat, self.origin_lon), (self.origin_lat, lon)).m
-                print("dist lat: ", dist_lat)
-                print("dist lon: ", dist_lon)
                 x = dist_lon
                 y = dist_lat
-                print("origin x: ", self.info.origin.position.x)
-                print("origin y: ", self.info.origin.position.y)
+
                 return (x+self.info.origin.position.x, y+self.info.origin.position.y)
             else:
                 return -1
-    
-    '''
-    def position_callback(self, data):
-        #calculate position in grid from position of the boat
-        if self.hasMap:
-            #real world coordinates of the bottom left corner of the map
-            orig_x = self.info.origin.position.x
-            orig_y = self.info.origin.position.y
-            #distance in metres between current position and bottom left corner of the map
-            dist_x = orig_x-#TODO: get transform from tf
-            dist_y = orig_y-#TODO: get transform from tf
-            #calculate position in grid
-            self.position = np.floor(x/self.info.resolution)+(np.floor(y/self.info.resolution))*self.info.width
-            self.hasPosition = True
-    '''
+
     #save depth at current position
     def depth_callback(self,data):
         self.depth = data.range
-        return
-
-        if self.hasMap and self.hasPosition and self.position >= 0:
-            self.depth[self.position] = data.range
-            self.visited[self.position] = 1
 
     def publish_area(self):
         msg = PolygonStamped()
         msg.header.frame_id = "map"
         msg.header.stamp = rospy.Time.now()
-        #origin_x, origin_y = self.origin
-        origin_x = np.floor(vincenty((self.origin_lat,self.origin_lon), (self.start_lat,self.origin_lon)).m/self.info.resolution)
-        origin_y = np.floor(vincenty((self.origin_lat,self.origin_lon), (self.origin_lat,self.start_lon)).m/self.info.resolution)
+        origin_x, origin_y = self.origin
         msg.polygon.points = [Point32(x, y, 0) for (x, y) in [
             (origin_x, origin_y),
             (origin_x+self.width, origin_y),
@@ -224,30 +203,24 @@ class MeasurementsPub:
 
     #get map metadata
     def map_callback(self, data):
-
         self.info = data.info
+
         width = self.info.width
         height = self.info.height
 
         self.grid = np.matrix(np.array(data.data).reshape((height,width))).transpose()
 
-        self.move_base.wait_for_server()
-        self.next()
+        self.has_map = True
 
-        if not self.hasMap:
-            self.visited = [0] * (height*width)
-            for i in range(height*width):
-                if data.data[i] > 50:
-                    self.visited[i] = 1
-                else:
-                    self.visited[i] = -1
-            self.depth = [0] * (height*width)
-            self.hasMap = True
-        
+        self.origin = self.gps_to_cell(self.start_lat, self.start_lon)
+        if not self.measurements:
+            self.goal = (self.origin[0], self.origin[1], 1)
+
+        self.next()
     
 def listener():
-    rospy.init_node('measurements_listener', anonymous=True, disable_signals=True)
-    MeasurementsPub(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6], sys.argv[7], sys.argv[8], sys.argv[9], sys.argv[10])
+    rospy.init_node('measurements_pub', anonymous=True, disable_signals=True)
+    MeasurementsPub()
     rospy.spin()
 
 if __name__ == '__main__':

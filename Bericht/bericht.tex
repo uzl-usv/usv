@@ -89,7 +89,7 @@ In Hinsicht auf Katastrophen spielt der Schutz vor Hochwasser in Schleswig-Holst
 \begin{figure}
 	\centering
 	\includegraphics[width=0.8\linewidth]{Hochwasserrisiko.png}
-	\caption{Hochwassergefahrenkarte für Hochwasser mit hoher Wahrscheinlichkeit, Quelle: \url{http://zebis.landsh.de/webauswertung/index.xhtml} ©GeoBasis-DE/LVermGeo SH, BKG}
+	\caption{Hochwassergefahrenkarte für Hochwasser mit hoher Wahrscheinlichkeit, Quelle: \protect\url{http://zebis.landsh.de/webauswertung/index.xhtml} ©GeoBasis-DE/LVermGeo SH, BKG}
 	\label{Hochwassergefahrenkarte}
 \end{figure}
 
@@ -177,7 +177,7 @@ Darüber hinaus verfügt das Boot noch über 2 Motoren für die Fortbewegung und
 \end{figure}
 
 Detaillierte Informationen zu allen Sensoren und Aktuatoren des Bootes und den erwarteten Ein- und Ausgabewerten lassen sich im zugehörigen GitHub-Projekt finden \footnote{\url{https://github.com/NRottmann/UzL_USV/}}.
-Für die Implementierung unseres Szenarios in der Simulation benötigten wir die GPS-, Kompass- und Ultraschalldaten und die Motoren. Deshalb haben wir ein GPS-Modul und zwei Ultraschall-Sensoren zum Differentialboot-Modell des Simulators hinzugefügt. Außerdem haben wir das Modell durch eine IMU zur Simulierung der Orientierung ergänzt. Dazu haben wir die GazeboRosGps, GazeboRosImu und GazeboRosSonar Plugins aus dem Paket \texttt{hector\_gazebo\_plugins}  \footnote{\url{https://github.com/tu-darmstadt-ros-pkg/hector_gazebo}} verwendet.
+Für die Implementierung unseres Szenarios in der Simulation benötigten wir die GPS-, Kompass- und Ultraschalldaten und die Motoren. Deshalb haben wir ein GPS-Modul und zwei Ultraschall-Sensoren zum Differentialboot-Modell des Simulators hinzugefügt. Außerdem haben wir das Modell durch eine IMU zur Simulierung der Orientierung ergänzt. Dazu haben wir die \texttt{GazeboRosGps}, \texttt{GazeboRosImu} und \texttt{GazeboRosSonar} Plugins aus dem Paket \texttt{hector\_gazebo\_plugins}  \footnote{\url{https://github.com/tu-darmstadt-ros-pkg/hector_gazebo}} verwendet.
 
 %\begin{figure}
 %	\includegraphics[width=\linewidth]{reference.png}
@@ -224,7 +224,16 @@ Beide Winkelangaben haben wir noch so angepasst, dass statt bei einer Orientieru
 	\caption{Nodes zur Simulierung der Ausgaben des Bootes}
 	\label{output-sim-nodes}
 \end{figure}
-Außerdem haben wir ein Skript \texttt{safety\_pub} hinzugefügt, dass den Batteriestand und den Wassersensor modelliert und aus das Topic \texttt{safety} publisht. Dabei wird ein linearer Abfall des Batteriestandes und eine Akkulaufzeit von 1h angenommen. Für den Wassersensor haben wir eine gewisse Wahrscheinlichkeit ausgewählt, mit der der Wert des Sensors auf 1 springt. Die Werte für Spannung, Strom und Ladung modellieren wir nicht, da sie für unser Szenario nicht relevant waren.
+Außerdem haben wir ein Skript \texttt{safety\_pub} hinzugefügt, dass den Batteriestand und den Wassersensor modelliert und auf das Topic \texttt{safety} publisht. Dabei wird ein linearer Abfall des Batteriestandes und eine Akkulaufzeit von 1h angenommen. Für den Wassersensor haben wir eine gewisse Wahrscheinlichkeit ausgewählt, mit der der Wert des Sensors auf 1 springt. Beide Parameter lassen sich in der Datei \texttt{spawn\_rescue\_robotics\_boat.launch} anpassen:
+
+\begin{lstlisting}[language=xml]
+<node name="safety_pub" pkg="usv_uzl" type="safety_pub.py">
+    <param name="battery_duration" value="60"/>
+    <param name="water_probability" value="0.001"/>
+</node>
+\end{lstlisting}
+
+Die Werte für Spannung, Strom und Ladung modellieren wir nicht, da sie für unser Szenario nicht relevant waren.
 Außerdem haben wir auf das Publishen der folgenden Topics vorerst verzichtet, da diese für unseren Anwendungsfall nicht notwendig waren:
 \begin{itemize}
 	\item \texttt{mag}
@@ -368,6 +377,6 @@ Unser am Anfang gestecktes Ziel, das USV durch Software zu ergänzen, die ein au
 Die Menge der Anwendungsfälle, in denen das Boot genutzt werden kann, ist bisher begrenzt. Die Messung der Wassertiefe könnte zwar dabei helfen, vermisste Personen im Wasser zu lokalisieren, aber andere Problemstellungen, wie zum Beispiel das Erkennen von Deichbrüchen und Verschmutzungen, können bis jetzt nicht abgedeckt werden. Aber auch für diese noch zu implementierenden Anwendungsfälle wird sich das bereits erreichte autonome Befahren des Gewässers sicher als nützlich herausstellen.
 
 \bibliography{bericht}{}
-\bibliographystyle{ieeetran}
+\bibliographystyle{IEEEtran}
 
 \end{document}
