@@ -23,6 +23,21 @@
 \newcommand\YAMLkeystyle{\color{black}\bfseries}
 \newcommand\YAMLvaluestyle{\color{blue}\mdseries}
 
+\definecolor{maroon}{rgb}{0.5,0,0}
+\definecolor{darkgreen}{rgb}{0,0.5,0}
+\lstdefinelanguage{XML}
+{
+	basicstyle=\ttfamily,
+	morestring=[s]{"}{"},
+	morecomment=[s]{?}{?},
+	morecomment=[s]{!--}{--},
+	commentstyle=\color{darkgreen},
+	moredelim=[s][\color{black}]{>}{<},
+	moredelim=[s][\color{red}]{\ }{=},
+	stringstyle=\color{blue},
+	identifierstyle=\color{maroon}
+}
+
 \makeatletter
 
 % here is a macro expanding to the name of the language
@@ -113,6 +128,7 @@ Auf Basis unserer Zielstellung haben wir mehrere Arbeitspakete identifiziert, au
 	\item Vermeidung dynamischer Hindernisse
 	\item Erstellung von Wegpunkten auf Basis der Karte
 	\item Erfassung der Wassertiefe und Eintragung in Karte
+	\item Return Home Verhalten
 	\item Schnittstellen zum Navigation Stack, Navigation zu Wegpunkten, Erstellung von Wegpunkten auf Basis der Karte und Erfassung der Wassertiefe auf das Boot übernehmen und -wenn notwendig- anpassen
 \end{enumerate}
 
@@ -224,7 +240,7 @@ Beide Winkelangaben haben wir noch so angepasst, dass statt bei einer Orientieru
 	\caption{Nodes zur Simulierung der Ausgaben des Bootes}
 	\label{output-sim-nodes}
 \end{figure}
-Außerdem haben wir ein Skript \texttt{safety\_pub} hinzugefügt, dass den Batteriestand und den Wassersensor modelliert und auf das Topic \texttt{safety} publisht. Dabei wird ein linearer Abfall des Batteriestandes und eine Akkulaufzeit von 1h angenommen. Für den Wassersensor haben wir eine gewisse Wahrscheinlichkeit ausgewählt, mit der der Wert des Sensors auf 1 springt. Beide Parameter lassen sich in der Datei \texttt{spawn\_rescue\_robotics\_boat.launch} anpassen:
+Außerdem haben wir ein Skript \texttt{safety\_pub} hinzugefügt, dass den Batteriestand und den Wassersensor modelliert und auf das Topic \texttt{safety} publisht. Dabei wird momentan ein linearer Abfall des Batteriestandes und eine Akkulaufzeit von 1h angenommen. Für den Wassersensor haben wir eine gewisse Wahrscheinlichkeit ausgewählt, mit der der Wert des Sensors auf 1 springt. Beide Parameter lassen sich in der Datei \texttt{spawn\_rescue\_robotics\_boat.launch} anpassen:
 
 \begin{lstlisting}[language=xml]
 <node name="safety_pub" pkg="usv_uzl" type="safety_pub.py">
@@ -334,11 +350,14 @@ Zur Erstellung der Wegpunkte müssen die GPS-Koordinaten der linken unteren Ecke
 \end{figure}
 
 \subsection{Erfassung der Wassertiefe} \label{measurements}
-Die Wassertiefe soll immer gemessen werden, wenn die aktuellen Zielkoordinaten erreicht wurden. Dies haben wir erzielt, indem wir in der in \ref{goal} genannten Callback-Methode den zuletzt vom Ultraschallsensor gemessenen Wert und die aktuelle Uhrzeit abspeichern. Bei Abschalten des Nodes werden die bis dahin gemessenen Werte, die Uhrzeit, zu der diese aufgenommen wurden, und die zugehörigen GPS-Koordinaten in einer json-Datei gespeichert. Dies ist möglich, indem diese Methode mit Hilfe des \texttt{rospy.on\_shutdown()}-Befehls als Callback-Methode für den Shutdown des Nodes angegeben wird.
+Die Wassertiefe soll immer gemessen werden, wenn die aktuellen Zielkoordinaten erreicht wurden. Dies haben wir erzielt, indem wir in der in \ref{goal} genannten Callback-Methode den zuletzt vom Ultraschallsensor gemessenen Wert, die Koordinaten und die aktuelle Uhrzeit abspeichern. Bei Abschalten des Nodes werden die bis dahin gemessenen Werte, die Uhrzeit, zu der diese aufgenommen wurden, und die zugehörigen GPS-Koordinaten in einer json-Datei gespeichert. Dies ist möglich, indem diese Methode mit Hilfe des \texttt{rospy.on\_shutdown()}-Befehls als Callback-Methode für den Shutdown des Nodes angegeben wird.
+
+\subsection{Return Home Verhalten}
+Da das Boot nicht auf dem Wasser verloren gehen oder unter gehen soll, haben wir das \texttt{measurements\_pub} Skript um einen Subscriber ergänzt, der auf das Safety-Topic subscribt und dem Boot bestimmte Zielkoordinaten (s. \ref{simulation-ergebnisse}) gibt, falls der Batteriestand niedrig ist, oder sich Wasser im Boot befindet, sowie für den Fall, dass der komplette angegebene Bereich erfolgreich abgefahren wurde.
 
 \section{Ergebnisse}
 
-\subsection{Simulator}
+\subsection{Simulator} \label{simulation-ergebnisse}
 Ein Ergebnis unseres Projektes ist ein Simulator, der ein USV simuliert, das Daten mit Hilfe eines GPS-Gerätes, zweiter Ultraschallsensoren und einer IMU aufnimmt und die Daten auf dieselben Topics publisht, die auch das Boot nutzt, das uns zur Verfügung gestellt wurde (s. Abbildung \ref{sonar}).
 
 \begin{figure}
@@ -348,7 +367,7 @@ Ein Ergebnis unseres Projektes ist ein Simulator, der ein USV simuliert, das Dat
 	\label{sonar}
 \end{figure}
 
-Die Simulationsumgebung kann man unter TODO finden und downloaden. Unser Szenario startet man mit den Befehlen:
+Die Simulationsumgebung kann man unter \url{https://github.com/uzl-usv/usv_sim_lsa} finden und downloaden. Unser Szenario startet man mit den Befehlen:
 \begin{itemize}
 	\item \texttt{catkin\_make\_isolated --install}
 	\item \texttt{source install\_isolated/setup.bash}
@@ -356,16 +375,38 @@ Die Simulationsumgebung kann man unter TODO finden und downloaden. Unser Szenari
 	\item \texttt{roslaunch usv\_sim rescue\_robotics\_boat\_scenario1.launch parse:=false}
 	\item \texttt{rosservice call /gazebo/unpause\_physics "{}"}
 \end{itemize}
-In dem Projekt TODO ist das implementierte Verhalten des Bootes, also das Abfahren des Gewässers mit gleichzeitiger Aufnahme der Wassertiefe, zu finden. Dieses Szenario startet man durch die Befehle:
-\begin{itemize}
-	\item \texttt{TODO: Bereich und Startkoordinaten angeben}
-	\item \texttt{roslaunch boot usv.launch}
+In dem Projekt \url{https://github.com/uzl-usv/usv} ist das implementierte Verhalten des Bootes, also das Abfahren des Gewässers mit gleichzeitiger Aufnahme der Wassertiefe, zu finden. Dieses Verhalten startet man durch den Befehl:
+
+\begin{itemize} \label{launch}
+	\item \texttt{roslaunch boot usv.launch params\_file:=<path\_to\_file.yaml>}
 \end{itemize}
-Die Werte TODO müssen dabei durch den gewünschten Namen der Datei, in der die Messungen gespeichert werden sollen, die GPS-Koordinaten, an denen das Boot die Messung starten soll und die Höhe und Breite des Bereichs, in dem gemessen werden soll. TODO soll durch den Abstand ersetzt werden, in dem die Messwerte gespeichert werden sollen. Nach der Simulation kann man die Ergebnissen dann in den Dateien TODO finden.
+
+\lstinputlisting[label={params}, caption={Parameter für den Start eines Szenarios}, language=yaml]{../usv_params.yaml}
+
+Davor müssen bestimmte Parameter in einer yaml-Datei gesetzt werden wie in Listing \ref{params}. Diese Parameter haben folgende Bedeutungen:
+\begin{itemize}
+	\item \texttt{origin/lat}, \texttt{origin/lon}: die GPS-Koordinaten der unteren linken Ecke der angegebenen Karte
+	\item \texttt{home/lat}, \texttt{home/lon}: die GPS-Koordinaten, zu denen im Falle eines Problems oder nach erfolgreichem Beenden der Aufgabe zurückgekehrt werden soll
+	\item \texttt{measurements/file\_name}: Pfad zu der Datei, in der die Messungen gespeichert werden sollen
+	\item \texttt{measurements/start/lat}, \texttt{measurements/start/lon}: der Startpunkt der Messungen (dies muss der süd-westlichste Punkt sein, an dem eine Messung erfolgen soll)
+	\item \texttt{measurements/width}, \texttt{measurements/height}: die Höhe und Breite des zu erfassenden Gebietes
+	\item \texttt{measurements/dist}: das Intervall in Metern, in dem Messdaten aufgenommen werden sollen
+\end{itemize}
+Der Pfad zu dieser yaml-Datei muss der launch-Datei übergeben werden. Nach der Simulation kann man die Ergebnisse der Messungen dann in den angegebenen Dateien finden.
 Wir haben Szenario mit verschiedenen Einstellungen gestartet:
-\begin{itemize}
-	\item TODO
-\end{itemize}
+
+\begin{center}
+\begin{tabular}[t]{|c| c| c| c|}
+	\hline
+	& \multicolumn{3}{c|}{measurements}\\
+	origin&start& & \\
+	lat, lon & lat, lon & height x width & dist\\
+	\hline
+	-30.048638,-51.236690&-30.047311,-51.234663&15 x 15&5\\
+	\hline
+\end{tabular}
+\end{center}
+
 Die Zielpunkte wurden in allen Versuchen richtig gesetzt und der Bereich damit korrekt abgefahren. Dabei wurden Orte, die sich in einem unbefahrbaren Bereich befanden, übersprungen. Unbekannte Hindernisse wurden ebenfalls immer umfahren.\\
 Die Messung der Wassertiefe kann im Simulator leider nur bedingt getestet werden, da die Wasseroberfläche als Hindernis wahrgenommen wird. Deshalb werden dort momentan zufällige Messwerte generiert.
 
