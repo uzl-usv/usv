@@ -1,7 +1,4 @@
 <launch>
-
-  <node pkg="boot" type="sonar_point_cloud.py" name="sonar_point_cloud"/>
-
    <master auto="start"/>
  <!-- Run the map server --> 
     <node name="map_server" pkg="map_server" type="map_server" args="$(find boot)/maps/map_2.yaml"/>
@@ -12,8 +9,6 @@
     <rosparam file="$(find boot)/local_costmap_params.yaml" command="load" />
     <rosparam file="$(find boot)/global_costmap_params.yaml" command="load" /> 
     <rosparam file="$(find boot)/base_local_planner_params.yaml" command="load" />
-
-    <remap from="/cmd_vel" to="/diffboat/cmd_vel"/>
  </node>
 
 </launch> 

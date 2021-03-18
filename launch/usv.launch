@@ -1,6 +1,11 @@
 <launch>
     <rosparam file="$(find boot)/usv_params.yaml" command="load" ns="usv" />
 
+    <remap from="/velocity" to="/diffboat/velocity"/>
+    <remap from="/odom" to="/diffboat/odom"/>
+    <remap from="/heading" to="/diffboat/heading"/>
+    <remap from="/cmd_vel" to="/diffboat/cmd_vel"/>
+
     <include file="$(find boot)/launch/navigation.launch"/>
     <include file="$(find boot)/launch/move_base.launch"/>
     <node pkg="boot" type="measurement_data.py" name="measurements_pub" output="screen"/>

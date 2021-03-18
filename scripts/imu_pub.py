@@ -8,7 +8,7 @@ from tf.transformations import quaternion_from_euler
 
 class ImuPub():
     def __init__(self):
-        rospy.Subscriber("/diffboat/heading", Heading, self.callback)
+        rospy.Subscriber("/heading", Heading, self.callback)
 
         self.pub = rospy.Publisher('imu_for_transform', Imu, queue_size=10)
         self.last_heading = 0
