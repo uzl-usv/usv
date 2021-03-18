@@ -6,7 +6,7 @@ from sensor_msgs import point_cloud2
 import numpy as np
 
 
-class UsPointCloud():
+class SonarPointCloud():
     def __init__(self):
         rospy.Subscriber("/range_front", Range, self.callback)
 
@@ -16,7 +16,11 @@ class UsPointCloud():
         header = Header(frame_id = data.header.frame_id,
                         stamp = rospy.Time.now())
 
-        points = [[data.range, 0, 0]]
+        alpha = data.field_of_view / 2
+        x = data.range
+        y = x * np.tan(alpha)
+
+        points = [[x, 0, 0], [x, -y, 0], [x, y, 0]]
 
         msg = point_cloud2.create_cloud_xyz32(header, points)
         
@@ -24,5 +28,5 @@ class UsPointCloud():
     
 if __name__ == '__main__':
     rospy.init_node('us_point_cloud', anonymous=True)
-    UsPointCloud()
+    SonarPointCloud()
     rospy.spin()
