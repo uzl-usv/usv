@@ -1,10 +1,12 @@
 <launch>
-    <rosparam file="$(find boot)/usv_params.yaml" command="load" ns="usv" />
+    <arg name="params_file" default="$(find boot)/usv_params.yaml" />
 
     <remap from="/velocity" to="/diffboat/velocity"/>
     <remap from="/odom" to="/diffboat/odom"/>
     <remap from="/heading" to="/diffboat/heading"/>
     <remap from="/cmd_vel" to="/diffboat/cmd_vel"/>
+
+    <rosparam file="$(arg params_file)" command="load" ns="usv" />
 
     <include file="$(find boot)/launch/navigation.launch"/>
     <include file="$(find boot)/launch/move_base.launch"/>
