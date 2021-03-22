@@ -1,0 +1,14 @@
+origin:
+    lat: -30.048638
+    lon: -51.236690
+home:
+    lat: -30.047358
+    lon: -51.233064
+measurements:
+    file_name: /home/r/versuch2.json
+    start:
+        lat: -30.047405
+        lon: -51.234473
+    width: 16
+    height: 20
+    dist: 4
