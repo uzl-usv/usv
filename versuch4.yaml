@@ -1,0 +1,14 @@
+origin:
+    lat: -30.048638
+    lon: -51.236690
+home:
+    lat: -30.047358
+    lon: -51.233064
+measurements:
+    file_name: versuch4.json
+    start:
+        lat: -30.047505
+        lon: -51.234573
+    width: 20
+    height: 25
+    dist: 2.5
