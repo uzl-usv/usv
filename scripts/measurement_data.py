@@ -13,6 +13,7 @@ from actionlib_msgs.msg import GoalStatus
 from geometry_msgs.msg import PolygonStamped, Point32, PoseStamped
 from geopy.distance import vincenty
 from nav_msgs.msg import MapMetaData
+from std_srvs.srv import Empty, EmptyResponse
 from actionlib.simple_action_client import SimpleActionClient
 from tf.transformations import quaternion_from_euler
 import numpy as np
@@ -48,6 +49,8 @@ class MeasurementsPub:
         rospy.Subscriber("/range_depth", Range, self.depth_callback)
         rospy.Subscriber("/map", OccupancyGrid, self.map_callback)
         rospy.Subscriber("/diffboat/safety", Safety, self.safety_callback)
+
+        rospy.Service("next_goal", Empty, self.service_next_goal)
 
         self.has_map = False
         self.info = MapMetaData()
@@ -140,6 +143,13 @@ class MeasurementsPub:
 
         self.next()
 
+    def service_next_goal(self, req):
+        rospy.logwarn("Skipping goal")
+        self.goal = self.next_goal(self.goal)
+        rospy.loginfo("Next goal %s", self.goal)
+        self.next()
+        return EmptyResponse()
+
     def return_home(self):
         rospy.loginfo("Returning home")
         goal = MoveBaseGoal()
@@ -213,9 +223,11 @@ class MeasurementsPub:
         self.has_map = True
 
         self.origin = self.gps_to_cell(self.start_lat, self.start_lon)
+        print(self.origin)
         if not self.measurements:
             self.goal = (self.origin[0], self.origin[1], 1)
 
+        self.publish_area()
         self.next()
     
 def listener():

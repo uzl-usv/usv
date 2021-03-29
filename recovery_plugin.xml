@@ -1,0 +1,8 @@
+<library path="lib/libsimple_recovery">
+  <class name="SimpleRecovery" type="SimpleRecovery" base_class_type="nav_core::RecoveryBehavior">
+    <description>Blablub</description>
+  </class>
+  <class name="BackupRecovery" type="BackupRecovery" base_class_type="nav_core::RecoveryBehavior">
+    <description>Blablub</description>
+  </class>
+</library>
