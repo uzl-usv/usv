@@ -5,10 +5,12 @@
     <remap from="/odom" to="/diffboat/odom"/>
     <remap from="/heading" to="/diffboat/heading"/>
     <remap from="/cmd_vel" to="/diffboat/cmd_vel"/>
+    <remap from="/range/front" to="/range_front"/>
 
     <rosparam file="$(arg params_file)" command="load" ns="usv" />
 
     <include file="$(find boot)/launch/navigation.launch"/>
     <include file="$(find boot)/launch/move_base.launch"/>
     <node pkg="boot" type="measurement_data.py" name="measurements_pub" output="screen"/>
+    <node pkg="boot" type="sonar.py" name="sonar" output="screen"/>
 </launch>

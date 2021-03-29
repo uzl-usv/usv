@@ -1,11 +1,44 @@
-controller_frequency: 5
+controller_frequency: 2
+max_planning_retries: 10
+base_global_planner: "global_planner/GlobalPlanner"
 base_local_planner: "teb_local_planner/TebLocalPlannerROS"
 
+recovery_behaviors:
+#  - name: "rotate"
+#    type: "rotate_recovery/RotateRecovery"
+  - name: "backup"
+    type: "BackupRecovery"
+  - name: "simple"
+    type: "SimpleRecovery"
+
+#rotate:
+#    frequency: 2
+GlobalPlanner:
+    use_dijkstra: true
+
+TrajectoryPlannerROS:
+    global_frame_id: /odometry/filtered
+    #map_frame: /map
+    max_vel_x: 0.4
+    max_vel_theta: 0.3
+    min_in_place_vel_theta: 0.1
+    yaw_goal_tolerance: 0.7
+    holonomic_robot: false
+    meter_scoring: true
+
 TebLocalPlannerROS:
+    weight_kinematics_forward_drive: 100
+    #enable_homotopy_class_planning: false
+    feasibility_check_no_poses: 0
+    #weight_obstacle: 500
     odom_topic: /odometry/filtered
     map_frame: /map
 
+    costmap_converter_plugin: "costmap_converter::CostmapToPolygonsDBSMCCH"
+
     # Trajectory
+    #switching_blocking_period: 1.0
+    #selection_cost_hysteresis: 0.8
     dt_ref: 0.9
     dt_hysteresis: 0.1
     max_global_plan_lookahead_dist: 10.0
@@ -15,11 +48,14 @@ TebLocalPlannerROS:
     max_vel_x_backwards: 0.2
     max_vel_theta: 0.3
     acc_lim_x: 0.5
-    acc_lim_theta: 0.5
+    acc_lim_theta: 0.2
     min_turning_radius: 0.0
+    footprint_padding: 0
     footprint_model:
-        type: "circular"
-        radius: 0.5
+#        type: "circular"
+#        radius: 0.5
+        type: "polygon"
+        vertices: [[0,-0.25], [1,-0.25], [1,0.25], [0,0.25]]
 
     # GoalTolerance
     xy_goal_tolerance: 1.5
@@ -27,5 +63,5 @@ TebLocalPlannerROS:
     free_goal_vel: False
 
     # Obstacles
-    min_obstacle_dist: 1.5
-    include_costmap_obstacles: True
+    min_obstacle_dist: 1.0
+#    obstacle_cost_exponent: 2

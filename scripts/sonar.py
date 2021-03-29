@@ -8,15 +8,25 @@ import numpy as np
 
 class Sonar():
     def __init__(self):
-        rospy.Subscriber("/range_front", Range, self.callback)
+        self.make_filter("front")
+        #self.make_filter("left1")
+        #self.make_filter("left2")
+        #self.make_filter("left3")
+        #self.make_filter("left4")
+        #self.make_filter("right1")
+        #self.make_filter("right2")
+        #self.make_filter("right3")
+        #self.make_filter("right4")
 
-        self.pub = rospy.Publisher('/range_front/filtered', Range, queue_size=10)
+    def make_filter(self, topic):
+        pub = rospy.Publisher("/range_filtered/" + topic, Range, queue_size=10)
 
-    def callback(self, data):
-        if data.range == data.max_range:
-            data.range = np.inf
-#            data.range = data.max_range + 1
-        self.pub.publish(data)
+        def callback(data):
+            if data.range == data.max_range:
+                data.range = np.inf
+            pub.publish(data)
+
+        rospy.Subscriber("/range/" + topic, Range, callback)
     
 if __name__ == '__main__':
     rospy.init_node('sonar', anonymous=True)

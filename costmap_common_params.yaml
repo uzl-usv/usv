@@ -1,8 +1,9 @@
 obstacle_range: 4.4
 raytrace_range: 4.5
 #footprint: [[x0, y0], [x1, y1], ... [xn, yn]]
-robot_radius: 0.5
-inflation_radius: 2
+footprint: [[0,-0.25], [1,-0.25], [1,0.25], [0,0.25]]
+#robot_radius: 0.2
+inflation_radius: 0.1
 
 #observation_sources: point_cloud_sensor
 #point_cloud_sensor: {data_type: PointCloud2, topic: /obstacles, marking: true, clearing: true}
@@ -13,8 +14,13 @@ plugins:
 #  - {name: obstacles, type: "costmap_2d::ObstacleLayer"}
   - {name: inflation_layer, type: "costmap_2d::InflationLayer"}
 
+inflation_layer:
+    cost_scaling_factor: 5
+
 sonar:
   topics: ["/range_front"]
+  #ns: "/range"
+  #topics: ["front", "left1", "left2", "left3", "left4", "right1", "right2", "right3", "right4"]
   clear_on_max_reading: true
   #mark_threshold: 0.5
   #clear_threshold: 0.1
