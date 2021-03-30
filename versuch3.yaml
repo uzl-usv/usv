@@ -7,7 +7,7 @@ home:
 measurements:
     file_name: versuch3.json
     start:
-        lat: -30.047050
+        lat: -30.047000
         lon: -51.234850
     width: 16
     height: 20

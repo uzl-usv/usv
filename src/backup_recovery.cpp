@@ -71,16 +71,16 @@ void BackupRecovery::runBehavior()
   //double current_angle = tf2::getYaw(global_pose.pose.orientation);
   //double start_angle = current_angle;
 
-     double   vel = 0.3;
+    double   vel = 0.3;
 
     geometry_msgs::Twist cmd_vel;
     cmd_vel.linear.x = -0.2;
     cmd_vel.linear.y = 0.0;
-    cmd_vel.angular.z = (rand() % 10 + 5) / 100;
+    cmd_vel.angular.z = (rand() % 20 + 10) / 100;
 
     vel_pub.publish(cmd_vel);
 
-   ros::Duration(3).sleep(); 
+    ros::Duration(3).sleep(); 
 
     cmd_vel.linear.x = 0;
     cmd_vel.angular.z = 0;

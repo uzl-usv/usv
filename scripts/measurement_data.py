@@ -83,7 +83,7 @@ class MeasurementsPub:
             }
             json.dump(json_data, write_file)
 
-    def next(self):
+    def send_goal(self):
         x, y, d = self.goal
 
         if self.returning_home:
@@ -107,6 +107,7 @@ class MeasurementsPub:
         goal.target_pose.pose.orientation.w = qw
 
         self.publish_area()
+#        self.move_base.cancel_all_goals()
         self.move_base.send_goal(goal, self.goal_callback)
 
     def next_goal(self, goal):
@@ -123,31 +124,34 @@ class MeasurementsPub:
             return (x, y, w)
 
     def goal_callback(self, status, result):
+        rospy.loginfo("Goal callback %s %s", status, result)
+
         x, y, w = self.goal
 
-        self.measurements.append({
-              "depth": self.depth,
-              "timestamp": datetime.now().replace(microsecond=0).isoformat(),
-              "x": x,
-              "y": y
-            })
+        if status == GoalStatus.SUCCEEDED:
+            self.measurements.append({
+                  "depth": self.depth,
+                  "timestamp": datetime.now().replace(microsecond=0).isoformat(),
+                  "x": x,
+                  "y": y
+                })
 
-        self.points.append([x, y, self.depth])
-        header = Header(frame_id = "map", stamp = rospy.Time.now())
-        msg = point_cloud2.create_cloud_xyz32(header, self.points)
-        self.point_pub.publish(msg)
+            self.points.append([x, y, self.depth])
+            header = Header(frame_id = "map", stamp = rospy.Time.now())
+            msg = point_cloud2.create_cloud_xyz32(header, self.points)
+            self.point_pub.publish(msg)
 
-        self.goal = self.next_goal(self.goal)
-        
-        rospy.loginfo("Next goal %s", self.goal)
+            self.goal = self.next_goal(self.goal)
+            
+            rospy.loginfo("Next goal %s", self.goal)
 
-        self.next()
+            self.send_goal()
 
     def service_next_goal(self, req):
         rospy.logwarn("Skipping goal")
         self.goal = self.next_goal(self.goal)
         rospy.loginfo("Next goal %s", self.goal)
-        self.next()
+        self.send_goal()
         return EmptyResponse()
 
     def return_home(self):
@@ -227,8 +231,7 @@ class MeasurementsPub:
         if not self.measurements:
             self.goal = (self.origin[0], self.origin[1], 1)
 
-        self.publish_area()
-        self.next()
+        self.send_goal()
     
 def listener():
     rospy.init_node('measurements_pub', anonymous=True, disable_signals=True)

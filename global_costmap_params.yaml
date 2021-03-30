@@ -6,12 +6,13 @@ global_costmap:
     static_map: true
     plugins:
       - {name: static_map, type: "costmap_2d::StaticLayer"}
-      - {name: sonar, type: "range_sensor_layer::RangeSensorLayer"}
+      - {name: sonar_global, type: "range_sensor_layer::RangeSensorLayer"}
+      - {name: obstacles, type: "costmap_2d::ObstacleLayer"}
       - {name: inflation_layer, type: "costmap_2d::InflationLayer"}
     inflation_layer:
-#        inflation_radius: 1
-        cost_scaling_factor: 2
-    sonar:
+        inflation_radius: 1
+#        cost_scaling_factor: 2
+    sonar_global:
         ns: "/range_filtered"
         clear_on_max_reading: false
         topics: ["front"]

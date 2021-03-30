@@ -1,4 +1,5 @@
 controller_frequency: 2
+planner_frequency: 1
 max_planning_retries: 10
 base_global_planner: "global_planner/GlobalPlanner"
 base_local_planner: "teb_local_planner/TebLocalPlannerROS"
@@ -8,13 +9,19 @@ recovery_behaviors:
 #    type: "rotate_recovery/RotateRecovery"
   - name: "backup"
     type: "BackupRecovery"
+  - name: "clear"
+    type: "clear_costmap_recovery/ClearCostmapRecovery"
   - name: "simple"
     type: "SimpleRecovery"
 
+clear:
+    reset_distance: 0
+    layer_names: ["obstacles", "sonar"]
+
 #rotate:
 #    frequency: 2
-GlobalPlanner:
-    use_dijkstra: true
+#GlobalPlanner:
+#    use_dijkstra: true
 
 TrajectoryPlannerROS:
     global_frame_id: /odometry/filtered
@@ -27,7 +34,9 @@ TrajectoryPlannerROS:
     meter_scoring: true
 
 TebLocalPlannerROS:
+    global_plan_viapoint_sep: 2
     weight_kinematics_forward_drive: 100
+    weight_viapoint: 10
     #enable_homotopy_class_planning: false
     feasibility_check_no_poses: 0
     #weight_obstacle: 500
@@ -55,10 +64,10 @@ TebLocalPlannerROS:
 #        type: "circular"
 #        radius: 0.5
         type: "polygon"
-        vertices: [[0,-0.25], [1,-0.25], [1,0.25], [0,0.25]]
+        vertices: [[-0.25,-0.25], [0.75,-0.25], [0.75,0.25], [-0.25,0.25]]
 
     # GoalTolerance
-    xy_goal_tolerance: 1.5
+    xy_goal_tolerance: 1.0
     yaw_goal_tolerance: 0.7
     free_goal_vel: False
 
