@@ -387,7 +387,7 @@ In dem Projekt \url{https://github.com/uzl-usv/usv} ist das implementierte Verha
 	\item \texttt{roslaunch boot usv.launch params\_file:=<path\_to\_param\_file.yaml>}
 \end{itemize}
 
-\lstinputlisting[label={params}, caption={Parameter für den Start eines Szenarios}, language=yaml]{../usv_params.yaml}
+%\lstinputlisting[label={params}, caption={Parameter für den Start eines Szenarios}, language=yaml]{../usv_params.yaml}
 
 Davor müssen bestimmte Parameter in einer yaml-Datei gesetzt werden wie in Listing \ref{params}. Diese Parameter haben folgende Bedeutungen:
 \begin{itemize}
@@ -434,26 +434,30 @@ In Versuch Nummer 1 sollte eine freie Fläche von $225m^2$ abgefahren werden. In
 \end{figure}
 
 \subsubsection{Versuch Nummer 2: unerwartete Hindernisse}
-In Versuch Nummer 2 sollte eine Fläche abgefahren werden, die $10mx20m$ umfasst (s. rotes Rechteck in Abbildung \ref{Versuch2}). Messwerte sollten in einem Abstand von $3m$ aufgenommen werden. Darüber hinaus befanden sich in dem Gebiet Bojen, deren Anwesenheit dem Boot nicht bekannt war. Da die Höhe und Breite in diesem nicht ganzzahlig durch \textit{dist} teilbar waren, wurde jeweils ein kleines Gebiet am Rand nicht erfasst (s. Abbildung \ref{Versuch2}).
+In Versuch Nummer 2 sollte eine Fläche abgefahren werden, die $20mx16m$ umfasst (s. rotes Rechteck in Abbildung \ref{Versuch2}). Messwerte sollten in einem Abstand von $4m$ aufgenommen werden. Darüber hinaus befanden sich in dem Gebiet Bojen, deren Anwesenheit dem Boot nicht bekannt war. Allen Bojen wurde während des Tests erfolgreich ausgewichen. Ein Beispiel ist in Abbildung \ref{Versuch2} zu sehen.
 
 \subsubsection{Versuch Nummer 3: Fläche mit unerreichbaren Regionen (erwartet)}
-In Versuch Nummer 3 sollte eine Fläche von $TODO$ abgefahren werden und dabei in Abständen von $TODO$ Messwerte aufgenommen werden. Außerdem waren Teile des Gebietes unbefahrbare Regionen und auch als solche im Occupancy Grid gespeichert.
+In Versuch Nummer 3 sollte eine Fläche von $20mx16m$ abgefahren werden und dabei in Abständen von $4m$ Messwerte aufgenommen werden. Außerdem waren Teile des Gebietes unbefahrbare Regionen und auch als solche im Occupancy Grid gespeichert. Zielpunkte, die in nicht befahrbaren Regionen lagen, wurden im Laufe des Tests erfolgreich übersprungen (s. Abbildung TODO).
 
 \subsubsection{Versuch Nummer 4: Fläche mit unerreichbaren Regionen (unerwartet)}
-In Versuch Nummer 4 sollte eine Fläche von $TODO$ abgefahren werden und dabei in Abständen von $TODO$ Messwerte aufgenommen werden. Außerdem waren Teile des Gebietes unbefahrbare Regionen, aber nicht als solche im Occupancy Grid gespeichert.
+In Versuch Nummer 4 sollte eine Fläche von $20mx15m$ abgefahren werden und dabei in Abständen von $2.5m$ Messwerte aufgenommen werden. Außerdem waren Teile des Gebietes unbefahrbare Regionen, aber nicht als solche im Occupancy Grid gespeichert. Das Hindernis wurde vom Boot immer erkannt und umfahren. Zielpunkte, die nicht anfahrbar waren, weil sie im Hindernis lagen, wurden vom Boot übersprungen. Danach fuhr das Boot wie geplant mit der Messung fort (s. Abbildung TODO).
 
 \subsubsection{Versuch Nummer 5, 6: Batteriestand gering, Wasser im Boot}
-In Versuchen Nummer 5 und 6 sollte eine Fläche von $225m^2$ abgefahren werden und dabei in Abständen von $5m$ Messwerte aufgenommen werden. Während des Fahrens sollte der Batteriestand unter 20\% fallen, bzw. der Wassersensor Wasser im Boot feststellen, so dass das Boot direkt "nach Hause" zurückkehren sollte. In beiden Fällen wurde das Verhalten korrekt durchgeführt.\\
+In Versuchen Nummer 5 und 6 sollte eine Fläche von $15mx15m$ abgefahren werden und dabei in Abständen von $5m$ Messwerte aufgenommen werden. Während des Fahrens sollte der Batteriestand unter 20\% fallen, bzw. der Wassersensor Wasser im Boot feststellen, so dass das Boot direkt "nach Hause" zurückkehren sollte. In beiden Fällen wurde das Verhalten korrekt ausgeführt.\\
 
-Die Zielpunkte wurden in allen Versuchen richtig gesetzt und der Bereich damit korrekt abgefahren. Dabei wurden Orte, die sich in einem (erwartet oder unerwartet) unbefahrbaren Bereich befanden, übersprungen.\\
-Die Messung der Wassertiefe kann im Simulator leider nur bedingt getestet werden, da die Wasseroberfläche als Hindernis wahrgenommen wird. Deshalb wurde dort immer der Minimalwert des Sensors zurückgegeben.
+\subsection{Versuch 7: Abbruch und Neustart der Messung}
+In Versuchen Nummer 7 sollte eine Fläche von $9mx15m$ abgefahren und dabei in Abständen von $2m$ Messwerte aufgenommen werden. Nach TODO Messpunkten wurde die Messung einmal abgebrochen und dann neu gestartet. Wie in Abbildung TODO zu sehen, wurden dann erst wieder Messwerte ab Punkt TODO aufgenommen.
+
+Die Zielpunkte wurden in allen Versuchen richtig gesetzt und der Bereich damit korrekt abgefahren. Dabei wurden Orte, die sich in einem (erwartet oder unerwartet) unbefahrbaren Bereich befanden, übersprungen und Hindernissen ausgewichen.\\
+Bei Abbruch der Messung konnte der Versuch später erfolgreich fortgeführt werden und bei Problemen oder nach Beenden der Messungen fuhr das Boot zu den dafür vorher festgelegten Koordinaten.\\
+Die Messung der Wassertiefe konnte im Simulator leider nur bedingt getestet werden, da die Wasseroberfläche als Hindernis wahrgenommen wird. Deshalb wurde dort wie erwartet immer Werte zurückgegeben, die um den Minimalwert des Sensors schwankten.
 
 \subsection{Realität}
 
 
 \section{Fazit} \label{fazit}
 Unser am Anfang gestecktes Ziel, das USV durch Software zu ergänzen, die ein autonomes Befahren eines Gewässers und die gleichzeitige Aufnahme von Messwerten ermöglicht, wurde im Laufe der Projektarbeit erreicht. Auch die Simulation des Bootes ist grundsätzlich funktionsfähig. Eine Ausnahme bildet die Messung der Wassertiefe, welche bislang nicht gemessen werden kann, da der Ultraschallsensor die Wasseroberfläche als Hindernis wahrnimmt. Außerdem verfügt das Boot noch über weitere Sensoren, die wir im Modell nicht beachtet haben, da wir sie für unseren Anwendungsfall nicht benötigten. Diese sollten aber relativ unproblematisch zu unserem Modell hinzugefügt werden können, so dass unser Modell auch für weitere Projekte eine gute Grundlage bilden sollte.\\
-Die Menge der Anwendungsfälle, in denen das Boot genutzt werden kann, ist bisher begrenzt. Die Messung der Wassertiefe könnte zwar dabei helfen, vermisste Personen im Wasser zu lokalisieren, aber andere Problemstellungen, wie zum Beispiel das Erkennen von Deichbrüchen und Verschmutzungen, können bis jetzt nicht abgedeckt werden. Aber auch für diese noch zu implementierenden Anwendungsfälle wird sich das bereits erreichte autonome Befahren des Gewässers sicher als nützlich herausstellen.
+Die Menge der Anwendungsfälle, in denen das Boot genutzt werden kann, ist bisher begrenzt. Die Messung der Wassertiefe könnte dabei helfen, vermisste Personen im Wasser zu lokalisieren. Andere Problemstellungen, wie zum Beispiel das Erkennen von Deichbrüchen und Verschmutzungen, können bis jetzt nicht abgedeckt werden. Aber auch für diese noch zu implementierenden Anwendungsfälle liefert das bereits erreichte autonome Befahren des Gewässers sicher eine gute Grundlage, da zuverlässig Hindernissen ausgewichen werden kann und das Boot im Problemfall nicht verloren geht, sondern zu bestimmten Koordinaten fährt.
 
 \bibliography{bericht}{}
 \bibliographystyle{IEEEtran}
