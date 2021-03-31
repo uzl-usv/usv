@@ -117,7 +117,7 @@ catkin_package(
   INCLUDE_DIRS
   include
   LIBRARIES
-  simple_recovery
+  recovery_behaviors
   CATKIN_DEPENDS 
   rospy
   std_msgs
@@ -137,15 +137,15 @@ include_directories(
 )
 
 ## Declare a C++ library
-add_library(simple_recovery
-    src/simple_recovery.cpp 
+add_library(recovery_behaviors
+    src/skip_goal_recovery.cpp 
     src/backup_recovery.cpp)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
 # add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-add_dependencies(simple_recovery ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(recovery_behaviors ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
@@ -189,7 +189,7 @@ add_dependencies(simple_recovery ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EX
 
 ## Mark libraries for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_libraries.html
-install(TARGETS simple_recovery
+install(TARGETS recovery_behaviors
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}

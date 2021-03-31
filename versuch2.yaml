@@ -5,7 +5,7 @@ home:
     lat: -30.047358
     lon: -51.233064
 measurements:
-    file_name: /home/r/versuch2.json
+    file_name: versuch2.json
     start:
         lat: -30.047407
         lon: -51.234420

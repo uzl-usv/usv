@@ -3,16 +3,16 @@
 #include <base_local_planner/costmap_model.h>
 #include <string>
 
-class SimpleRecovery : public nav_core::RecoveryBehavior
+class SkipGoalRecovery : public nav_core::RecoveryBehavior
 {
 public:
   /**
    * @brief  Constructor, make sure to call initialize in addition to actually initialize the object
    */
-  SimpleRecovery();
+  SkipGoalRecovery();
 
   /**
-   * @brief  Initialization function for the SimpleRecovery recovery behavior
+   * @brief  Initialization function for the SkipGoalRecovery recovery behavior
    * @param name Namespace used in initialization
    * @param tf (unused)
    * @param global_costmap (unused)
@@ -22,14 +22,14 @@ public:
                   costmap_2d::Costmap2DROS*, costmap_2d::Costmap2DROS* local_costmap);
 
   /**
-   * @brief  Run the SimpleRecovery recovery behavior.
+   * @brief  Run the SkipGoalRecovery recovery behavior.
    */
   void runBehavior();
 
   /**
    * @brief  Destructor for the rotate recovery behavior
    */
-  ~SimpleRecovery();
+  ~SkipGoalRecovery();
 
 private:
   costmap_2d::Costmap2DROS* local_costmap_;

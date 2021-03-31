@@ -23,6 +23,7 @@ def callback(pub, data):
     odom.pose = pose
     odom.twist = twist
     odom.header.frame_id = "base_link"
+    odom.child_frame_id = "base_link"
     pub.publish(odom)
     
 def listener():

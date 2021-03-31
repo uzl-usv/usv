@@ -1,4 +1,4 @@
-#include <simple_recovery.h>
+#include <skip_goal_recovery.h>
 #include <pluginlib/class_list_macros.h>
 //#include <nav_core/parameter_magic.h>
 #include <ros/ros.h>
@@ -12,14 +12,14 @@
 
 
 // register this planner as a RecoveryBehavior plugin
-PLUGINLIB_EXPORT_CLASS(SimpleRecovery, nav_core::RecoveryBehavior)
+PLUGINLIB_EXPORT_CLASS(SkipGoalRecovery, nav_core::RecoveryBehavior)
 
-SimpleRecovery::SimpleRecovery():
+SkipGoalRecovery::SkipGoalRecovery():
     local_costmap_(NULL), initialized_(false), world_model_(NULL)
 {
 }
 
-void SimpleRecovery::initialize(std::string name, tf::TransformListener*, costmap_2d::Costmap2DROS*, costmap_2d::Costmap2DROS* local_costmap)
+void SkipGoalRecovery::initialize(std::string name, tf::TransformListener*, costmap_2d::Costmap2DROS*, costmap_2d::Costmap2DROS* local_costmap)
 {
   if (!initialized_)
   {
@@ -35,12 +35,12 @@ void SimpleRecovery::initialize(std::string name, tf::TransformListener*, costma
   }
 }
 
-SimpleRecovery::~SimpleRecovery()
+SkipGoalRecovery::~SkipGoalRecovery()
 {
   delete world_model_;
 }
 
-void SimpleRecovery::runBehavior()
+void SkipGoalRecovery::runBehavior()
 {
   if (!initialized_)
   {
@@ -50,10 +50,10 @@ void SimpleRecovery::runBehavior()
 
   if (local_costmap_ == NULL)
   {
-    ROS_ERROR("The costmap passed to the SimpleRecovery object cannot be NULL. Doing nothing.");
+    ROS_ERROR("The costmap passed to the SkipGoalRecovery object cannot be NULL. Doing nothing.");
     return;
   }
-  ROS_WARN("Simple recovery behavior started.");
+  ROS_WARN("Skip goal recovery behavior started.");
 
   ros::Rate r(2);
   ros::NodeHandle n;

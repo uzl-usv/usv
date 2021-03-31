@@ -1,8 +1,8 @@
-<library path="lib/libsimple_recovery">
-  <class name="SimpleRecovery" type="SimpleRecovery" base_class_type="nav_core::RecoveryBehavior">
-    <description>Blablub</description>
+<library path="lib/librecovery_behaviors">
+  <class name="SkipGoalRecovery" type="SkipGoalRecovery" base_class_type="nav_core::RecoveryBehavior">
+    <description>Skip goal</description>
   </class>
   <class name="BackupRecovery" type="BackupRecovery" base_class_type="nav_core::RecoveryBehavior">
-    <description>Blablub</description>
+    <description>Backup</description>
   </class>
 </library>

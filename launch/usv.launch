@@ -1,5 +1,5 @@
 <launch>
-    <arg name="params_file" default="$(find boot)/usv_params.yaml" />
+    <arg name="params_file" default="$(find boot)/versuch1.yaml" />
 
     <remap from="/velocity" to="/diffboat/velocity"/>
     <remap from="/odom" to="/diffboat/odom"/>
