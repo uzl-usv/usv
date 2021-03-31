@@ -97,8 +97,9 @@
 
 \begin{abstract}
 In dieser Projektarbeit wurde ein im Rahmen einer Bachelorarbeit entwickeltes Oberflächenfahrzeug für Wasserexploration in Rettungsszenarien durch Software ergänzt, die es ermöglicht, autonom ein Gewässer abzufahren und dabei die Wassertiefe zu erfassen.\\
-Die notwendigen Funktionalitäten wurden in Python unter Nutzung von ROS und des von ROS bereitgestellten Navigation Stacks implementiert. Um die Funktionsweise testen zu können, wurde außerdem eine Simulation des Bootes auf Basis eines bestehenden Simulators erstellt.\\
-Die richtige Funktionsweise des Bootes wurde im Simulator getestet.
+Dafür wurde zuerst die Relevanz von Oberflächenfahrzeugen in Katastrophenfällen kurz betrachtet.
+Die notwendigen Funktionalitäten wurden in Python und C++ unter Nutzung von ROS und des von ROS bereitgestellten Navigation Stacks implementiert. Um die Funktionsweise testen zu können, wurde außerdem eine Simulation des Bootes auf Basis eines bestehenden Simulators erstellt.\\
+Die Funktionsweise des Bootes wurde im Simulator in mehreren Szenarien getestet. Dabei konnte festgestellt werden, dass sich das Boot korrekt verhält. 
 \end{abstract}
 
 \section{Einleitung}
@@ -301,7 +302,9 @@ Die von dem Navigation Stack genutzte Odometrie kommt aus dem Topic \texttt{/odo
 
 \subsubsection{map}
 
-Für den Map Server haben wir eine schwarz-weiß Karte der in der Simulation dargestellten Region (\ref{diluvio}) erstellt. Dabei stellen weiße Regionen befahrbare und schwarze unbefahrbare Gebiete dar. Auf Basis der Karte wird vom Map Server ein Occupancy Grid erstellt, das letztendlich vom globalen Planer genutzt wird, um einen befahrbaren Pfad zu generieren.
+Für den Map Server haben wir eine schwarz-weiß Karte der in der Simulation dargestellten Region (\ref{diluvio}) erstellt. Dabei stellen weiße Regionen befahrbare und schwarze unbefahrbare Gebiete dar. Auf Basis der Karte wird vom Map Server ein Occupancy Grid erstellt, das letztendlich vom globalen Planer genutzt wird, um einen befahrbaren Pfad zu generieren:
+
+\lstinputlisting[label={map-param}, caption={Parameter der Map}, language=yaml, breaklines=true]{../maps/map_2_orig.yaml}
 
 \begin{figure}[h]
 	\centering
@@ -326,9 +329,9 @@ Die Werte aus \texttt{cmd\_vel} werden in dem Skript \texttt{boat\_diff\_vel\_ct
 
 Die tatsächliche Navigation zu den Wegpunkten ist nach Implementierung der Schnittstellen Aufgabe des Navigation Stacks (durch das Publishen des Topics \texttt{cmd\_vel}).\\
 In Testläufen mit reiner Weiterleitung der \texttt{cmd\_vel}-Werte auf die Motoren konnte kein sicheres Anfahren der Zielpunkte erreicht werden, obwohl mehrere lokale Planer mit unterschiedlichen Parametern ausprobiert wurden. Der stabilste Planer schien der \texttt{teb\_local\_planner} \footnote{\url{http://wiki.ros.org/teb_local_planner}} zu sein, weshalb wir uns letztendlich für diesen entschieden haben. 
-Wir vermuteten als Grund für die mäßige Leistung der lokalen Planer, dass das vom Navigation Stack geforderte Verhalten im Wasser später auftritt, als es an Land der Fall wäre und vom Navigation Stack erwartet wird. Daraufhin haben wir die Verarbeitung des \texttt{cmd\_vel}-Topics noch durch zwei PID-Regler ergänzt (s. \ref{cmd}).
-
 Die Parameter, die von den Standardeinstellungen abweichen, sind in Listing \ref{local-planner} zu sehen.
+Wir vermuteten als Grund für die mäßige Leistung der lokalen Planer, dass das vom Navigation Stack geforderte Verhalten im Wasser später auftritt, als es an Land der Fall wäre und vom Navigation Stack erwartet wird. Daraufhin haben wir die Verarbeitung des \texttt{cmd\_vel}-Topics noch durch zwei PID-Regler ergänzt (s. \ref{cmd}).
+Als globale Planer wird der \texttt{GlobalPlanner} aus dem Paket \texttt{global\_planner} \footnote{\url{http://wiki.ros.org/global_planner}} mit Standardeinstellungen verwendet.
 
 \lstinputlisting[label={local-planner}, caption={Parameter des lokalen Planers}, language=yaml, breaklines=true]{../base_local_planner_params.yaml}
 
@@ -342,7 +345,8 @@ Die in \texttt{recovery\_behaviors} gelisteten Verhalten werden in \ref{recovery
 
 
 \subsection{Vermeidung unerwarteter Hindernisse}
-Die Vermeidung von Hindernissen wird mit Hilfe des vorderen Ultraschallsensors und des in \ref{sensor-topics} erwähnten Plugins vom Navigation Stack erreicht.
+
+Die Vermeidung von Hindernissen wird mit Hilfe des vorderen Ultraschallsensors und des in \ref{sensor-topics} erwähnten Plugins vom Navigation Stack erreicht. Um auch große Hindernisse in der Pfadplanung berücksichtigen zu können, werden Hindernisse in die globale Costmap eingetragen und sich damit gemerkt.
 
 \subsection{Erstellung von Wegpunkten auf Basis der Karte}
 Zur Erstellung der Wegpunkte müssen die GPS-Koordinaten der linken unteren Ecke eines abzufahrenden Bereichs angegeben werden, sowie die Höhe und Breite des abzufahrenden Bereichs in Metern. Außerdem kann ein Intervall in Metern angegeben werden, das den Abstand angibt, in dem Messwerte aufgenommen werden sollen. Der angegebene Bereich wird wie in Abbildung \ref{Fahrtplanung} zu sehen, in Schlangenlinien abgefahren, wobei Wegpunkte in den gegebenen Abständen erzeugt werden. Ist einer dieser Wegpunkte in einer unerreichbaren Region (nach dem Occupancy Grid auf Grundlage der gegebenen Karte), wird dieser Punkt übersprungen.
@@ -360,7 +364,8 @@ Die Wassertiefe soll immer gemessen werden, wenn die aktuellen Zielkoordinaten e
 
 \subsection{Ignorieren unerwartet nicht anfahrbarer Zielpunkte} \label{recovery}
 
-Auf Gewässern kann es viele (auch nicht dynamische) Hindernisse geben, die auf Karten nicht vermerkt sind, zum Beispiel ankernde Boote, Stege, oder Bojen. Diesen Hindernissen muss nicht nur ausgewichen werden, es ist auch notwendig, einen neuen Zielpunkt zu setzen, sollten solche Hindernisse einen Zielpunkt über einen längeren Zeitraum blockieren. Dafür werden mehrere Recovery-Verhalten eingesetzt, wobei zwei davon neu implementiert wurden. Falls der Planer merkt, dass der aktuelle Plan nicht durchführbar ist, wird als erstes das \texttt{BackupRecovery} durchgeführt. Dabei wird langsam für drei Sekunden zurückgesetzt und zufällig in eine Richtung gedreht, mit dem Ziel danach einen besseren Plan finden zu können. Falls das scheitert wird als nächstes die lokale Costmap durch \texttt{ClearCostmapRecovery} aus dem Paket \texttt{clear\_costmap\_recovery} \footnote{\url{wiki.ros.org/clear_costmap_recovery}} geleert, um auf eventuell falsch erkannte Hindernisse zu reagieren. Falls weiterhin kein fahrbarer Pfad existiert, wird \texttt{SkipGoalRecovery} durchgeführt und das aktuelle Ziel übersprungen.
+Auf Gewässern kann es viele (auch nicht dynamische) Hindernisse geben, die auf Karten nicht vermerkt sind, zum Beispiel ankernde Boote, Stege, oder Bojen. Diesen Hindernissen muss nicht nur ausgewichen werden, es ist auch notwendig, einen neuen Zielpunkt zu setzen, sollten solche Hindernisse einen Zielpunkt über einen längeren Zeitraum blockieren. Dafür werden mehrere Recovery-Verhalten eingesetzt, wobei zwei davon neu implementiert wurden. Da die Verhalten über \texttt{pluginlib} \footnote{\url{http://wiki.ros.org/pluginlib}} eingebunden werden, muss für die Implementierung C++ verwendet werden.
+Falls der Planer merkt, dass der aktuelle Plan nicht durchführbar ist, wird als erstes das \texttt{BackupRecovery} durchgeführt. Dabei wird langsam für drei Sekunden zurückgesetzt und zufällig in eine Richtung gedreht, mit dem Ziel danach einen besseren Plan finden zu können. Falls das scheitert wird als nächstes die lokale Costmap durch \texttt{ClearCostmapRecovery} aus dem Paket \texttt{clear\_costmap\_recovery} \footnote{\url{wiki.ros.org/clear_costmap_recovery}} geleert, um auf eventuell falsch erkannte Hindernisse zu reagieren. Falls weiterhin kein fahrbarer Pfad existiert, wird \texttt{SkipGoalRecovery} durchgeführt und das aktuelle Ziel übersprungen.
 
 \subsection{Homing Verhalten}
 
@@ -368,14 +373,16 @@ Da das Boot nicht auf dem Wasser verloren gehen oder unter gehen soll, haben wir
 
 \section{Ergebnisse} \label{ergebnisse}
 
-Ein Ergebnis unseres Projektes ist ein Simulator, der ein USV simuliert, das Daten mit Hilfe eines GPS-Gerätes, zweiter Ultraschallsensoren und einer IMU aufnimmt und die Daten auf dieselben Topics publisht, die auch das Boot nutzt, das uns zur Verfügung gestellt wurde (s. Abbildung \ref{sonar}).
+Ein Ergebnis unseres Projektes ist ein Simulator, der ein USV simuliert, das Daten mit Hilfe eines GPS-Gerätes, zweiter Ultraschallsensoren und einer IMU aufnimmt und die Daten auf dieselben Topics publisht, die auch das Boot nutzt, das uns zur Verfügung gestellt wurde.
 
-\begin{figure}[h]
-	\centering
-	\includegraphics[width=0.8\linewidth]{sonar_boot.jpg}
-	\caption{USV, Messwerte des Sonars in blau}
-	\label{sonar}
-\end{figure}
+% (s. Abbildung \ref{sonar}).
+
+%\begin{figure}[h]
+%	\centering
+%	\includegraphics[width=0.8\linewidth]{sonar_boot.jpg}
+%	\caption{USV, Messwerte des Sonars in blau}
+%	\label{sonar}
+%\end{figure}
 
 Die Simulationsumgebung kann man unter \url{https://github.com/uzl-usv/usv_sim_lsa} finden und downloaden. Unser Szenario startet man mit den Befehlen:
 \begin{itemize}
@@ -458,7 +465,9 @@ In Versuch Nummer 3 sollte eine Fläche von $20mx16m$ abgefahren werden und dabe
 \end{figure}
 
 \subsection{Versuch Nummer 4: Fläche mit unerreichbaren Regionen (unerwartet)} \label{v4}
+
 In Versuch Nummer 4 sollte eine Fläche von $20mx15m$ abgefahren werden und dabei in Abständen von $2.5m$ Messwerte aufgenommen werden. Außerdem waren Teile des Gebietes unbefahrbare Regionen, aber nicht als solche im Occupancy Grid gespeichert. Das Hindernis wurde vom Boot immer erkannt und umfahren. Zielpunkte, die nicht anfahrbar waren, weil sie im Hindernis lagen, wurden vom Boot übersprungen. Danach fuhr das Boot wie geplant mit der Messung fort (s. Abbildung \ref{Versuch4}).
+Jedoch hat lange gedauert, das gesamte Hindernis zu erfassen. Deshalb wurde ein weiterer Versuch (siehe \ref{versuch8}) unter gleichen Bedingungen, aber mit zusätzlichen Ultraschallsensoren durchgeführt.
 
 \begin{figure}[H]
 	\centering
@@ -468,9 +477,11 @@ In Versuch Nummer 4 sollte eine Fläche von $20mx15m$ abgefahren werden und dabe
 \end{figure}
 
 \subsection{Versuch Nummer 5, 6: Batteriestand gering, Wasser im Boot} \label{v56}
+
 In Versuchen Nummer 5 und 6 sollte eine Fläche von $15mx15m$ abgefahren werden und dabei in Abständen von $5m$ Messwerte aufgenommen werden. Während des Fahrens sollte der Batteriestand unter 20\% fallen, bzw. der Wassersensor Wasser im Boot feststellen, so dass das Boot direkt "nach Hause" zurückkehren sollte. In beiden Fällen wurde das Verhalten korrekt ausgeführt.\\
 
-\subsection{Versuch 7: Abbruch und Neustart der Messung} \label{v7}
+\subsection{Versuch Nummer 7: Abbruch und Neustart der Messung} \label{v7}
+
 In Versuchen Nummer 7 sollte eine Fläche von $9mx15m$ abgefahren und dabei in Abständen von $2m$ Messwerte aufgenommen werden. Nach elf Messpunkten wurde die Messung einmal abgebrochen und dann neu gestartet. Wie in Abbildung \ref{Versuch7} zu sehen, wurden dann erst wieder Messwerte ab Punkt zwölf aufgenommen. Da die Höhe und Breite des Bereichs nicht ganzzahlig durch die  Messabstände teilbar waren, wurden Bereiche an den Rändern ausgelassen.
 
 \begin{figure}[H]
@@ -480,16 +491,28 @@ In Versuchen Nummer 7 sollte eine Fläche von $9mx15m$ abgefahren und dabei in A
 	\label{Versuch7}
 \end{figure}
 
+\subsection{Versuch Nummer 8} \label{versuch8}
+
+Der Versuchsaufbau ist gleich mit dem von Versuch Nummer 4, aber das Boot ist mit einem Array von Ultraschallsensoren ausgestattet, die in unterschiedlichen Winkeln nach Vorne und zur Seite des Bootes ausgerichtet sind. Dadurch konnte das große Hindernis schneller erfasst und umfahren werden.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.6\linewidth]{sonar.png}
+	\caption{Boot mit mehreren Ultraschallsensoren}
+	\label{sonar}
+\end{figure}
+
 \subsection{Zusammenfassung}
+
 Die Zielpunkte wurden in allen Versuchen richtig gesetzt und der Bereich damit korrekt abgefahren. Dabei wurden Orte, die sich in einem (erwartet oder unerwartet) unbefahrbaren Bereich befanden, übersprungen und Hindernissen ausgewichen.\\
 Bei Abbruch der Messung konnte der Versuch später erfolgreich fortgeführt werden und bei Problemen oder nach Beenden der Messungen fuhr das Boot zu den dafür vorher festgelegten Koordinaten.\\
 Die Messung der Wassertiefe konnte im Simulator leider nur bedingt getestet werden, da die Wasseroberfläche als Hindernis wahrgenommen wird. Deshalb wurde dort wie erwartet immer Werte zurückgegeben, die um den Minimalwert des Sensors schwankten. Die Messwerte und ihre Koordinaten wurden nach allen Versuchen automatisch in einer Datei gespeichert.
 
-
 \section{Fazit} \label{fazit}
-Wie unsere Tests in \ref{ergebnisse} zeigen, wurde unser am Anfang gestecktes Ziel, das USV durch Software zu ergänzen, die ein autonomes Befahren eines Gewässers ermöglicht, im Laufe der Projektarbeit erreicht, da das Boot sowohl autonom einen bestimmten Bereich abdecken, sowie seinen Fahrtverlauf an Hindernisse anpassen kann (zu sehen in den Versuchen \ref{v2}, \ref{v3}, \ref{v4}). Auch die Implementation unseres Use Cases wurde erfolgreich durchgeführt, wie in den Abbildungen an den Messwerten zu erkennen. Die Simulation des Bootes ist ebenfalls funktionsfähig. Eine Ausnahme bildet die Messung der Wassertiefe, welche bislang nicht korrekt gemessen werden kann, da der Ultraschallsensor die Wasseroberfläche als Hindernis wahrnimmt. Dies hat aber bislang keine Auswirkungen auf die Funktion des Bootes. Außerdem verfügt das Boot noch über weitere Sensoren, die wir im Modell nicht beachtet haben, da wir sie für unseren Anwendungsfall nicht benötigten. Diese sollten aber, analog zu den schon hinzugefügten Sensoren, durch Plugins relativ unproblematisch zu unserem Modell hinzugefügt werden können, so dass unser Modell auch für weitere Projekte eine gute Grundlage bildet.\\
-Die Menge der Anwendungsfälle, in denen das Boot genutzt werden kann, ist bisher begrenzt. Die Messung der Wassertiefe könnte dabei helfen, vermisste Personen oder Gegenstände im Wasser zu lokalisieren. Andere Problemstellungen, wie zum Beispiel das Erkennen von Deichbrüchen und Verschmutzungen, können bis jetzt nicht abgedeckt werden. Aber auch für diese noch zu implementierenden Anwendungsfälle liefert das bereits erreichte autonome Befahren des Gewässers eine gute Grundlage.
 
+Wie unsere Tests in Kapitel \ref{ergebnisse} zeigen, wurde unser am Anfang gestecktes Ziel, das USV durch Software zu ergänzen, die ein autonomes Befahren eines Gewässers ermöglicht, im Laufe der Projektarbeit erreicht, da das Boot sowohl autonom einen bestimmten Bereich abdecken, sowie seinen Fahrtverlauf an Hindernisse anpassen kann (zu sehen in den Versuchen in \ref{v2}, \ref{v3}, \ref{v4}). Auch die Implementation unseres Use Cases wurde erfolgreich durchgeführt, wie in den Abbildungen an den Messwerten zu erkennen. Raum zur Verbesserung sehen wir vor allem bei der Ausstattung mit Sensoren, da damit Hindernisse schneller umfahren werden könnten, sowie bei der Vermeidung dynamischer Hindernisse, da sich diese dauerhaft gemerkt werden, was bei einer großen Anzahl problematisch werden könnte.\\
+Die Simulation des Bootes ist ebenfalls funktionsfähig. Eine Ausnahme bildet die Messung der Wassertiefe, welche bislang nicht korrekt gemessen werden kann, da der Ultraschallsensor die Wasseroberfläche als Hindernis wahrnimmt. Dies hat aber bislang keine Auswirkungen auf die Funktion des Bootes. Außerdem verfügt das Boot noch über weitere Sensoren, die wir im Modell nicht beachtet haben, da wir sie für unseren Anwendungsfall nicht benötigten. Diese sollten aber, analog zu den schon hinzugefügten Sensoren, durch Plugins relativ unproblematisch zu unserem Modell hinzugefügt werden können, so dass unser Modell auch für weitere Projekte eine gute Grundlage bildet.\\
+Die Menge der Anwendungsfälle, in denen das Boot genutzt werden kann, ist bisher begrenzt. Die Messung der Wassertiefe könnte dabei helfen, vermisste Personen oder Gegenstände im Wasser zu lokalisieren. Andere Problemstellungen, wie zum Beispiel das Erkennen von Deichbrüchen und Verschmutzungen, können bis jetzt nicht abgedeckt werden. Aber auch für diese noch zu implementierenden Anwendungsfälle liefert das bereits erreichte autonome Befahren des Gewässers eine gute Grundlage.
 
 \bibliography{bericht}{}
 \bibliographystyle{IEEEtran}
