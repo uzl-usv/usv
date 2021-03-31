@@ -14,6 +14,7 @@
 \usepackage{xcolor}
 \usepackage{url}
 \usepackage{float}
+\usepackage{MnSymbol}
 
 \renewcommand{\figurename}{Abbildung}
 
@@ -23,6 +24,13 @@
 \newcommand\YAMLcolonstyle{\color{red}\mdseries}
 \newcommand\YAMLkeystyle{\color{black}\bfseries}
 \newcommand\YAMLvaluestyle{\color{blue}\mdseries}
+
+\lstset{prebreak=\raisebox{0ex}[0ex][0ex]
+        {\ensuremath{\rhookswarrow}}}
+\lstset{postbreak=\raisebox{0ex}[0ex][0ex]
+        {\ensuremath{\rcurvearrowse\space}}}
+\lstset{breaklines=true, breakatwhitespace=true}
+\lstset{numbers=left, numberstyle=\scriptsize}
 
 \definecolor{maroon}{rgb}{0.5,0,0}
 \definecolor{darkgreen}{rgb}{0,0.5,0}
@@ -288,7 +296,8 @@ Für die Lokalisierung im Weltkoordinatensystem (also im \texttt{map}-Frame) wur
 \end{figure}
 
 \subsubsection{odom}
-Die von dem Navigation Stack genutzte Odometrie kommt aus dem Topic \texttt{/odometry/filtered\_map}, welches vom Node TODO ausgegeben wird.
+
+Die von dem Navigation Stack genutzte Odometrie kommt aus dem Topic \texttt{/odometry/filtered\_map}, welches vom Node \texttt{robot\_localization\_ekf\_node\_map} ausgegeben wird.
 
 \subsubsection{map}
 
@@ -310,14 +319,27 @@ Statt direkt auf das Topic \texttt{move\_base\_simple/goal} zu publishen, benutz
 Statt die normalerweise vom Navigation Stack genutzten \texttt{LaserScan}-Topics und \texttt{PointCloud}-Topics zu nutzen, um Hindernisse in die globale und lokale Costmap eintragen zu können und so auch unerwarteten Hindernissen ausweichen zu können, nutzen wir das \texttt{range\_sensor\_layer}-Plugin \footnote{\url{http://wiki.ros.org/range_sensor_layer}}, um die Daten des vorderen Ultraschallsensors direkt verwenden zu können. Im Vergleich zur Nutzung der Ultraschall-Daten zur Erstellung einer \texttt{PointCloud}-Message, lieferte diese Herangehensweise die besseren Resultate, da mit der \texttt{PointCloud}-Message Hindernisse in den Tests häufig nicht gut umfahren wurden.
 
 \subsubsection{cmd\_vel} \label{cmd}
+
 Die Werte aus \texttt{cmd\_vel} werden in dem Skript \texttt{boat\_diff\_vel\_ctrl} in lineare Geschwindigkeit und Winkelgeschwindigkeit aufgeteilt. Aus der Differenz dieser und der aktuellen linearen und Winkelgeschwindigkeit aus dem Topic \texttt{/odometry/filtered\_map} werden dann je Regeldifferenzen für die lineare und Winkelgeschwindigkeit berechnet, welche danach genutzt werden, um mit Hilfe zweier PID-Regler die ausgeregelten Geschwindigkeiten zu errechnen, die auf die Motoren geschrieben werden.
 
 \subsection{Navigation zu Wegpunkten}
 
 Die tatsächliche Navigation zu den Wegpunkten ist nach Implementierung der Schnittstellen Aufgabe des Navigation Stacks (durch das Publishen des Topics \texttt{cmd\_vel}).\\
-In Testläufen mit reiner Weiterleitung der \texttt{cmd\_vel}-Werte ab die Motoren konnte kein sicheres Anfahren der Zielpunkte erreicht werden, obwohl mehrere lokale Planer mit unterschiedlichen Parametern ausprobiert wurden. Der stabilste Planer schien der \texttt{teb\_local\_planner} \footnote{\url{http://wiki.ros.org/teb_local_planner}} zu sein, weshalb wir uns letztendlich für diesen entschieden haben. Die Parameter, die von den Standardeinstellungen abweichen, sind in Listing \ref{local-planner} zu sehen.\\
-\lstinputlisting[label={local-planner}, caption={Parameter des lokalen Planers}, language=yaml]{../base_local_planner_params.yaml}
+In Testläufen mit reiner Weiterleitung der \texttt{cmd\_vel}-Werte auf die Motoren konnte kein sicheres Anfahren der Zielpunkte erreicht werden, obwohl mehrere lokale Planer mit unterschiedlichen Parametern ausprobiert wurden. Der stabilste Planer schien der \texttt{teb\_local\_planner} \footnote{\url{http://wiki.ros.org/teb_local_planner}} zu sein, weshalb wir uns letztendlich für diesen entschieden haben. 
 Wir vermuteten als Grund für die mäßige Leistung der lokalen Planer, dass das vom Navigation Stack geforderte Verhalten im Wasser später auftritt, als es an Land der Fall wäre und vom Navigation Stack erwartet wird. Daraufhin haben wir die Verarbeitung des \texttt{cmd\_vel}-Topics noch durch zwei PID-Regler ergänzt (s. \ref{cmd}).
+
+Die Parameter, die von den Standardeinstellungen abweichen, sind in Listing \ref{local-planner} zu sehen.
+
+\lstinputlisting[label={local-planner}, caption={Parameter des lokalen Planers}, language=yaml, breaklines=true]{../base_local_planner_params.yaml}
+
+Der Parameter \texttt{planner\_frequency} muss auf einen positiven Zahlenwert gesetzt werden, damit der globale Planer auf neu eingetragene Hindernisse in der Costmap reagieren kann, da ansonsten nur bei erreichen des Ziels ein neuer globaler Plan erstellt wird. Aus Performanzgründen wurde \texttt{controller\_frequency}, also wie oft der lokale Plan aktualisiert wird, auf einen niedrigen Wert gesetzt, da die Berechnung anspruchsvoll ist und die Frequenz sonst nicht eingehalten werden kann. Ebenfalls um den Rechenaufwand zu verringern wurde \texttt{dt\_ref} erhöht, da eine feine Auflösung der Trajektorie nicht erforderlich ist.
+
+Das Boot erreicht in der Simulation eine maximale lineare Geschwindigkeit von etwa $1 \frac{m}{s}$ und eine Winkelgeschwindigkeit von $0.3 \frac{m}{s}$. Die maximale Beschleunigung beträgt $2.5 \frac{m}{s^2}$ bei Geradeausfahrt und $0.5 \frac{m}{s^2}$ bei einer reinen Drehung. Diese Werte werden in den Zeilen 34-38 definiert. Weiterhin wird ein Footprint in Form eines Rechtecks mit den Maßen $1m \times 0.5m$ definiert.
+
+Da Ungenauigkeiten durch das GPS auftreten, wird eine \texttt{xy\_goal\_tolerance} von $1m$ und eine \texttt{yaw\_goal\_tolerance} von $\frac{\pi}{4}$ angegegen. Um einen genügenden Abstand von Hindernissen einzuhalten, wurde \texttt{min\_obstacle\_dist} auf $1m$ gesetzt.
+
+Die in \texttt{recovery\_behaviors} gelisteten Verhalten werden in \ref{recovery} genauer erläutert. Durch \texttt{max\_planning\_retries} wird bestimmt, dass nach $10$ fehlgeschlagenen Versuchen die Verhalten der Reihe nach ausgeführt werdten.
+
 
 \subsection{Vermeidung unerwarteter Hindernisse}
 Die Vermeidung von Hindernissen wird mit Hilfe des vorderen Ultraschallsensors und des in \ref{sensor-topics} erwähnten Plugins vom Navigation Stack erreicht.
@@ -333,12 +355,15 @@ Zur Erstellung der Wegpunkte müssen die GPS-Koordinaten der linken unteren Ecke
 \end{figure}
 
 \subsection{Erfassung der Wassertiefe} \label{measurements}
+
 Die Wassertiefe soll immer gemessen werden, wenn die aktuellen Zielkoordinaten erreicht wurden. Dies haben wir erzielt, indem wir in der in \ref{goal} genannten Callback-Methode den zuletzt vom Ultraschallsensor gemessenen Wert, die Koordinaten und die aktuelle Uhrzeit abspeichern. Bei Abschalten des Nodes werden die bis dahin gemessenen Werte, die Uhrzeit, zu der diese aufgenommen wurden, und die zugehörigen GPS-Koordinaten in einer json-Datei gespeichert. Dies ist möglich, indem diese Methode mit Hilfe des \texttt{rospy.on\_shutdown()}-Befehls als Callback-Methode für den Shutdown des Nodes angegeben wird.
 
-\subsection{Ignorieren unerwartet nicht anfahrbarer Zielpunkte}
-Auf Gewässern kann es viele (auch nicht dynamische) Hindernisse geben, die auf Karten nicht vermerkt sind, zum Beispiel ankernde Boote, Stege, oder Bojen. Diesen Hindernissen muss nicht nur ausgewichen werden, es ist auch notwendig, einen neuen Zielpunkt zu setzen, sollten solche Hindernisse einen Zielpunkt über einen längeren Zeitraum blockieren. 
+\subsection{Ignorieren unerwartet nicht anfahrbarer Zielpunkte} \label{recovery}
+
+Auf Gewässern kann es viele (auch nicht dynamische) Hindernisse geben, die auf Karten nicht vermerkt sind, zum Beispiel ankernde Boote, Stege, oder Bojen. Diesen Hindernissen muss nicht nur ausgewichen werden, es ist auch notwendig, einen neuen Zielpunkt zu setzen, sollten solche Hindernisse einen Zielpunkt über einen längeren Zeitraum blockieren. Dafür werden mehrere Recovery-Verhalten eingesetzt, wobei zwei davon neu implementiert wurden. Falls der Planer merkt, dass der aktuelle Plan nicht durchführbar ist, wird als erstes das \texttt{BackupRecovery} durchgeführt. Dabei wird langsam für 3 Sekunden zurückgesetzt und zufällig in eine Richtung gedreht, mit dem Ziel danach einen besseren Plan finden zu können. Falls das scheitert wird als nächstes die lokale Costmap durch \texttt{ClearCostmapRecovery} aus dem Paket \texttt{clear\_costmap\_recovery} \footnote{\url{wiki.ros.org/clear_costmap_recovery}} geleert, um auf eventuell falsch erkannte Hindernisse zu reagieren. Falls weiterhin kein fahrbarer Pfad existiert, wird \texttt{SkipGoalRecovery} durchgeführt und das aktuelle Ziel übersprungen.
 
 \subsection{Homing Verhalten}
+
 Da das Boot nicht auf dem Wasser verloren gehen oder unter gehen soll, haben wir das \texttt{measurements\_pub} Skript um einen Subscriber ergänzt, der auf das Safety-Topic subscribt und dem Boot bestimmte Zielkoordinaten (s. \ref{simulation-ergebnisse}) gibt, falls der Batteriestand niedrig ist, oder sich Wasser im Boot befindet, sowie für den Fall, dass der komplette angegebene Bereich erfolgreich abgefahren wurde.
 
 \section{Ergebnisse}
