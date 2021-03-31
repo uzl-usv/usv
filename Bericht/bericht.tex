@@ -111,7 +111,7 @@ In Hinsicht auf Katastrophen spielt der Schutz vor Hochwasser in Schleswig-Holst
 
 Für den Einsatz im und auf dem Wasser sind unter anderem Unbemannte Unterwasserfahrzeuge (UUVs) und Unbemannte Oberflächenfahrzeuge (USVs) möglich \cite{surveyDisasterRobotics}. USVs haben dabei den Vorteil, mehr Sensoren über eine längere Zeitdauer tragen zu können und damit mehr verschiedene Messungen gleichzeitig über einen längeren Zeitraum durchführen zu können, wobei sowohl Messungen an der Oberfläche als auch im Wasser möglich sind \cite{coley2015}. Trotzdem wird ihnen bis jetzt in der Literatur weniger Beachtung gewidmet, als den Unbemannten Unterwasser Fahrzeugen \cite{surveyDisasterRobotics}. \newline
 
-Aus den genannten Gründen erscheint uns die Entwicklung autonomer USVs, die für vielfältige Szenarien im Bereich der Rettungsrobotik ausgerüstet sind, sinnvoll. In dieser Arbeit sollen dafür erste notwendige Schritte erfolgen, indem ein im Rahmen einer Bachelorarbeit entwickeltes Oberflächenfahrzeug für Wasserexploration in Rettungsszenarien durch Software ergänzt wird, die das autonome Befahren eines Gewässers ermöglicht. Da auf dem USV bereits ROS installiert und teilweise genutzt wird, liegt es nahe, vom von ROS bereitgestellten Navigation Stack \footnote{\url{https://github.com/ros-planning/navigation}} Gebrauch zu machen. Dieser bietet viele nützliche Funktionalitäten -unter anderem werden mehrere globale und lokale Planer bereitgestellt- für die autonome Navigation von mobilen Robotern \cite{zheng2019ros}. Es gibt sowohl ein Tutorial von ROS \footnote{\url{http://wiki.ros.org/navigation/Tutorials}}, als auch einige andere Quellen (z.B. \cite{zheng2019ros}), die sich mit der Benutzung des Navigation Stacks auseinandersetzen. Auf GitHub wurde das Projekt bis heute etwa 1400 Mal geforkt (Stand 08.03.2021). Das spricht für die Popularität des Navigation Stacks, weshalb angenommen werden kann, dass die Verwendung des Navigation Stacks die Verständlichkeit des Projekts auch für Außenstehende verbessert.\\
+Aus den genannten Gründen erscheint uns die Entwicklung autonomer USVs, die für vielfältige Szenarien im Bereich der Rettungsrobotik ausgerüstet sind, sinnvoll. In dieser Arbeit sollen dafür erste notwendige Schritte erfolgen, indem ein im Rahmen einer Bachelorarbeit entwickeltes Oberflächenfahrzeug für Wasserexploration in Rettungsszenarien durch Software ergänzt wird, die das autonome Befahren eines Gewässers ermöglicht. Da auf dem USV bereits ROS installiert und genutzt wird, liegt es nahe, vom von ROS bereitgestellten Navigation Stack \footnote{\url{https://github.com/ros-planning/navigation}} Gebrauch zu machen. Dieser bietet viele nützliche Funktionalitäten -unter anderem werden mehrere globale und lokale Planer bereitgestellt- für die autonome Navigation von mobilen Robotern \cite{zheng2019ros}. Es gibt sowohl ein Tutorial von ROS \footnote{\url{http://wiki.ros.org/navigation/Tutorials}}, als auch einige andere Quellen (z.B. \cite{zheng2019ros}), die sich mit der Benutzung des Navigation Stacks auseinandersetzen. Auf GitHub wurde das Projekt bis heute etwa 1400 Mal geforkt (Stand 08.03.2021). Das spricht für die Popularität des Navigation Stacks, weshalb angenommen werden kann, dass die Verwendung des Navigation Stacks die Verständlichkeit des Projekts auch für Außenstehende verbessert.\\
 
 Des Weiteren wollen wir ein Anwendungsszenario, das Erfassen der Wassertiefe, implementieren und testen. Die Aufzeichnung der Wassertiefe könnte zum Beispiel hilfreich bei der Suche nach vermissten Personen oder Gegenständen, wie zum Beispiel Autos, sein.\\
 
@@ -121,49 +121,27 @@ Um die Funktionsweise des Bootes testen zu können, ohne Gefahr zu laufen, das B
 
 Auf Basis unserer Zielstellung haben wir mehrere Arbeitspakete identifiziert, auf deren Durchführung im Folgenden eingegangen werden soll:
 \begin{enumerate}
-	\item Auswahl des Simulators
 	\item Einarbeitung in die Simulationsumgebung
 	\item Simulation der Sensoren des Bootes
 	\item Simulation der Ausgaben des Bootes
 	\item Implementierung der Schnittstellen zum Navigation Stack
 	\item Navigation zu Wegpunkten
-	\item Vermeidung dynamischer Hindernisse
+	\item Vermeidung unerwarteter Hindernisse
 	\item Erstellung von Wegpunkten auf Basis der Karte
 	\item Erfassung der Wassertiefe und Eintragung in Karte
-	\item Ignorieren von unerwartet nicht anfahrbaren Zielpunkte
-	\item Return Home Verhalten
-	\item Schnittstellen zum Navigation Stack, Navigation zu Wegpunkten, Erstellung von Wegpunkten auf Basis der Karte und Erfassung der Wassertiefe auf das Boot übernehmen und -wenn notwendig- anpassen
+	\item Ignorieren unerwartet nicht anfahrbarer Zielpunkte
+	\item Homing Verhalten
+
 \end{enumerate}
-
-\subsection{Auswahl des Simulators}
-
-Für die Suche eines geeigneten Simulators haben wir eine Literaturrecherche nach Webster und Watson \cite{webster2002} vorgenommen. Diese erfolgt nach der Auswahl der Stichworte und zu durchsuchender Datenbanken in drei Schritten:
-
-\begin{enumerate}
-	\item Durchsuchung der Datenbanken mit Hilfe der Stichworte nach relevanten Artikeln
-	\item "Go backward" \cite{webster2002}: Betrachtung von Artikeln, die von den im ersten Schritt gefundenen Artikeln zitiert werden
-	\item "Go forward" \cite{webster2002}: Betrachtung von Artikeln, in denen die im ersten Schritt gefundenen Artikel zitiert werden
-\end{enumerate}
-
-Als Stichworte haben wir folgende Begriffe gewählt:
-
-\begin{itemize}
-	\item Unmanned Surface Vehicle Simulation
-	\item Unmanned Surface Vehicle Simulator
-	\item Boat Simulation
-	\item Boat Simulator
-\end{itemize}
-
-Wir haben als einzige Datenbank Google Scholar ausgewählt, da die meisten Archive wichtiger wissenschaftlicher Verlage in dieser Datenbank abgedeckt werden \cite{googlescholar}. Es wurden jeweils die ersten 10 Treffer nach passenden Simulatoren durchsucht. Nur für Paper, die einen relevanten verfügbaren Simulator benutzen, wurde eine Vorwärts- und Rückwärtssuche durchgeführt.\\
-
-Wir haben uns entschieden, das USV im \textit{Unmanned Surface Vehicle Simulator with Realistic Environmental Disturbances} \footnote{\url{https://github.com/disaster-robotics-proalertas/usv_sim_lsa}} zu simulieren.
-
-Der Master-Branch des Simulators benutzt ROS Kinetic. Da auf dem USV aber momentan ROS Melodic läuft und darüber hinaus Kinetic nach April 2021 nicht mehr von ROS unterstützt wird \cite{rosdistros}, hielten wir es für sinnvoll, zu versuchen, den Simulator auf ROS Melodic laufen zu lassen. Obwohl das Projekt über einen dafür vorgesehenen Branch \footnote{\url{https://github.com/disaster-robotics-proalertas/usv_sim_lsa/tree/master-melodic}} verfügt, mussten wir dieses Vorhaben letztendlich aus Zeitgründen und aufgrund von für uns nicht lokalisierbaren Problemen abbrechen und mit Kinetic weiterarbeiten.
 
 \subsection{Einarbeitung in die Simulationsumgebung}
+Als Simulationsumgebung wurde uns \textit{Simulated enviroment for Unmanned Surface Vehicles}\footnote{\url{https://github.com/disaster-robotics-proalertas/usv_sim_lsa}} vorgeschlagen. Das Besondere an diesem Simulator ist, dass dieser Umwelteinflüsse wie die Wasseroberfläche inklusive Wellen, die Strömung des Gewässers und den Wind simuliert, weshalb besonders realistische Szenarien gestaltet werden können. Außerdem handelt es sich um eine Gazebo-Simulation, weshalb die Nodes, die später auf dem echten Boot laufen sollen, fast unverändert in der Simulation verwendet werden können. Des Weiteren werden mehrere Boot-Modelle bereitgestellt, die gut als Grundlage für ein eigenes Szenario genutzt werden können\cite{paravisi2019}.\\
 
-Da das Projekt nicht optimal dokumentiert ist, hat die Einarbeitung in den Simulator mehr Zeit in Anspruch genommen, als ursprünglich gedacht. Der Übersichtlichkeit halber wollen wir hier einen Überblick über die Bestandteile geben, die für unser Projekt angepasst wurden:\\
-Die Simulationsumgebung stellt 4 verschiedene Boot-Modelle bereit: ein Airboot, ein Differentialboot, ein Ruderboot und ein Segelboot \cite{paravisi2019}. Wir haben das Differentialboot-Modell als Grundlage für unser Modell genommen, da es sich bei unserem USV ebenfalls um ein Boot mit 2 Motoren am Heck (s. Abbildung \ref{boot}) handelt. Wir haben 2 Dateien identifiziert, die das Boot modellieren: \texttt{diffboat.xacro}\footnote{\url{https://github.com/disaster-robotics-proalertas/usv_sim_lsa/blob/master/usv_sim/xacro/diffboat.xacro}} (modelliert unter anderem die Motoren) und \texttt{boat\_subdivided\_validated.xacro}\footnote{\url{https://github.com/disaster-robotics-proalertas/usv_sim_lsa/blob/master/usv_sim/xacro/boat_subdivided_validated.xacro}} (modelliert unter anderem Sensoren). Diese Dateien wurden als Grundlage genutzt, um unser Boot zu modellieren.
+Da das Projekt nicht optimal dokumentiert ist, hat die Einarbeitung in den Simulator mehr Zeit in Anspruch genommen, als ursprünglich gedacht.\\
+Der Master-Branch des Simulators benutzt ROS Kinetic. Da auf dem USV aber momentan ROS Melodic läuft und darüber hinaus Kinetic nach April 2021 nicht mehr von ROS unterstützt wird \cite{rosdistros}, hielten wir es für sinnvoll, zu versuchen, den Simulator auf ROS Melodic laufen zu lassen. Obwohl das Projekt über einen dafür vorgesehenen Branch\footnote{\url{https://github.com/disaster-robotics-proalertas/usv_sim_lsa/tree/master-melodic}} verfügt, mussten wir dieses Vorhaben letztendlich aus Zeitgründen und aufgrund von für uns nicht lokalisierbaren Problemen abbrechen und mit Kinetic weiterarbeiten.\newline
+
+Der Übersichtlichkeit halber wollen wir hier einen Überblick über die Bestandteile geben, die für unser Projekt angepasst wurden:\\
+Die Simulationsumgebung stellt 4 verschiedene Boot-Modelle bereit: ein Airboot, ein Differentialboot, ein Ruderboot und ein Segelboot \cite{paravisi2019}. Wir haben das Differentialboot-Modell als Grundlage für unser Modell genommen, da es sich bei unserem USV ebenfalls um ein Boot mit 2 Motoren am Heck (s. Abbildung \ref{boot}) handelt. Wir haben 2 Dateien identifiziert, die das Boot modellieren: \texttt{diffboat.xacro} (modelliert unter anderem die Motoren) und \texttt{boat\_subdivided\_validated.xacro} (modelliert unter anderem Sensoren). Diese Dateien wurden als Grundlage genutzt, um unser Boot zu modellieren.
 
 Die Szenarien befinden sich im Ordner \texttt{scenes}. Durch die Bearbeitung der XML-Dateien kann man z.B. die Anzahl und Positionen der Boote und Bojen, die Position und Art des Terrains und die Position der Kamera anpassen.\\
 Ebenfalls hilfreich für die Erstellung neuer Szenarien sind die launch-Dateien in den folgenden Ordnern:
@@ -226,7 +204,7 @@ v = \sqrt{x^2+y^2}
 \end{equation}
 
 Dabei ist x die Geschwindigkeit in x-Richtung und y die Geschwindigkeit in y-Richtung.\\
-Nach ROS-Konvention sollte die x-Achse Richtung Osten und die y-Achse Richtung Norden zeigen \cite{REP105}. An dieser Konvention haben wir uns bei der Implementierung orientiert. Wenn im Folgenden von x- oder y-Achse die Rede ist, sei damit auch immer die Achse in Richtung Osten oder Norden gemeint.\\
+Nach ROS-Konvention soll die x-Achse Richtung Osten und die y-Achse Richtung Norden zeigen \cite{REP105}. Dies wird in der Simulationsumgebung ebenfalls eingehalten, also haben wir uns bei der Implementierung an dieser Konvention auch orientiert. Wenn im Folgenden von x- oder y-Achse die Rede ist, sei damit auch immer die Achse in Richtung Osten oder Norden gemeint.\\
 Deshalb können wir die beiden benötigten Werte aus dem Topic \texttt{gps/velocity} auslesen, welches vom simulierten GPS-Modul gepublisht wird.\\
 Für \texttt{heading} bestimmen wir in \texttt{heading\_pub} die beiden Komponenten \texttt{gps\_heading} und \texttt{mag\_heading} einzeln:\\
 Über 
@@ -262,22 +240,20 @@ Außerdem haben wir auf das Publishen der folgenden Topics vorerst verzichtet, d
 \subsection{Implementierung der Schnittstellen zum Navigation Stack}
 Der Navigation Stack nutzt Odometrie- und Sensordaten, um Kommandos bezüglich der Geschwindigkeit an einen mobilen Roboter geben zu können, um einen bestimmte Zielkoordinaten zu erreichen. Damit dies möglich ist, müssen auf dem Roboter erst bestimmte Schnittstellen implementiert werden\cite{NavWiki}. In Abbildung \ref{nav} zu kann man mehrere Topics erkennen, die als Schnittstellen zwischen Roboter und Navigation Stack fungieren:
 \begin{itemize}
+	\item \texttt{tf}
 	\item \texttt{odom}
 	\item \texttt{map}
 	\item \texttt{move\_base\_simple/goal}
 	\item Sensor Topics des Formates LaserScan oder PointCloud
 	\item \texttt{cmd\_vel}
 \end{itemize}
-Im Folgenden soll es darum gehen, wie wir die Werte der Topics generiert bzw. verarbeitet haben. Da wir in der Simulation dieselben Ausgabeschnittstellen erzeugt haben, wie wir sie auf dem echten Boot vorliegen haben werden, genügte in den meisten Fällen eine Implementierung der Schnittstellen zum Navigation Stack sowohl für die Simulation als auch für das echte Boot.
+Im Folgenden soll es darum gehen, wie wir die Werte der Topics generiert bzw. verarbeitet haben. Da wir in der Simulation dieselben Ausgabeschnittstellen erzeugt haben, wie wir sie auf dem echten Boot vorliegen haben werden, sollten die Implementationen der Schnittstellen gut auf das echte Boot übertragbar sein.
 
 \begin{figure}[h]
 	\includegraphics[width=\linewidth]{overview_tf.png}
 	\caption{Robot Setup Navigation Stack (Quelle: http://wiki.ros.org/navigation/Tutorials/RobotSetup (Stand: 2018-07-19 02:43:42))}
 	\label{nav}
 \end{figure}
-
-\subsubsection{odom}
-Auf das Topic \texttt{/odom} schreiben wir die aktuellen Geschwindigkeiten des Bootes. Da wir die Frame ID des Bootes als \texttt{base\_link} festgelegt haben, sind die Position und Orientierung über die Position und Orientierung des \textit{frames} bekannt. Als Geschwindigkeit kann \texttt{velocity} übergeben werden.
 
 \subsubsection{tf}
 
@@ -289,7 +265,7 @@ Auf das Topic \texttt{/odom} schreiben wir die aktuellen Geschwindigkeiten des B
 
 Der Navigation Stack benötigt 2 Transformationen um zu funktionieren, eine vom \texttt{map}-Frame zum \texttt{odom}-Frame und eine vom \texttt{odom}-Frame zum \texttt{base\_link}-Frame. Wie in \texttt{REP-105} \cite{REP105} spezifiziert, ist das \texttt{map}-Frame ein statisches Weltkoordinatensystem, welches die Position des Bootes in kartesischen Koordinaten auf der Karte darstellt.  Das \texttt{odom}-Frame ist ebenfalls ein statisches Koordinatensystem, in dem durch Auswertung der Odometrie die theoretische Position des Bootes bestimmt wird, welche zwar von der echten Position stark abweichen kann, aber dennoch eine genauere Lokalisierung ermöglicht.
 
-Für die Erstellung dieser Transformationen setzen wir das \texttt{robot\_localization} \footnote{\url{http://wiki.ros.org/robot_localization}} Paket ein, welches die nötigen Transformationen bereits zur Verfügung stellt, GPS Koordinaten in Weltkoordinaten umrechnet und Sensorinformationen mit einem Kalman-Filter zusammenfügt \cite{MooreStouchKeneralizedEkf2014}. Den reultierenden Transformations-Tree einschließlich der statischen Transformationen ist in Abbildung \ref{frames} zu sehen.\\
+Für die Erstellung dieser Transformationen setzen wir das \texttt{robot\_localization} \footnote{\url{http://wiki.ros.org/robot_localization}} Paket ein, welches die nötigen Transformationen bereits zur Verfügung stellt, GPS Koordinaten in Weltkoordinaten umrechnet und Sensorinformationen mit einem Kalman-Filter zusammenfügt \cite{MooreStouchKeneralizedEkf2014}. Der reultierende Transformations-Tree einschließlich der statischen Transformationen ist in Abbildung \ref{frames} zu sehen.\\
 
 Für die Transformation vom \texttt{odom}- zum \texttt{base\_link}-Frame nutzen wir den \texttt{ekf\_localization\_node}. Dieser kann Messages der Form:
 \begin{itemize}
@@ -311,9 +287,12 @@ Für die Lokalisierung im Weltkoordinatensystem (also im \texttt{map}-Frame) wur
 	\label{localization-overview}
 \end{figure}
 
+\subsubsection{odom}
+Die von dem Navigation Stack genutzte Odometrie kommt aus dem Topic \texttt{/odometry/filtered\_map}, welches vom Node TODO ausgegeben wird.
+
 \subsubsection{map}
 
-Für den Map Server haben wir je eine schwarz-weiß Karte der in der Simulation dargestellten Region (\ref{diluvio}) und der Wakenitz mit Hilfe von OpenStreetMaps \footnote{\url{www.openstreetmap.org/copyright}} erstellt. Dabei stellen weiße Regionen befahrbare und schwarze unbefahrbare Gebiete dar.
+Für den Map Server haben wir eine schwarz-weiß Karte der in der Simulation dargestellten Region (\ref{diluvio}) erstellt. Dabei stellen weiße Regionen befahrbare und schwarze unbefahrbare Gebiete dar.
 
 \begin{figure}[h]
 	\centering
@@ -328,23 +307,23 @@ Wichtige Informationen über die Karte, wie die Anzahl der Meter pro Pixel, sowi
 Statt direkt auf das Topic \texttt{move\_base\_simple/goal} zu publishen, benutzen wir die \texttt{actionlib} API \footnote{\url{http://wiki.ros.org/actionlib}}. Diese hat den Vorteil, dass man direkt eine Callback-Methode übergeben kann, die aufgerufen wird, wenn das übergebene Ziel erreicht wurde. Das ist für uns besonders nützlich, da wir so die Messwerte an bestimmten Positionen leicht speichern können (s. \ref{measurements}).
 
 \subsubsection{Sensor Topics} \label{sensor-topics}
-Statt die normalerweise vom Navigation Stack genutzten \texttt{LaserScan}-Topics und \texttt{PointCloud}-Topics zu nutzen, um Hindernisse in die globale und lokale Costmap eintragen zu können und so auch unerwarteten Hindernissen ausweichen zu können, nutzen wir das \texttt{range\_sensor\_layer}-Plugin \footnote{\url{http://wiki.ros.org/range_sensor_layer}}, um die Daten des vorderen Ultraschallsensors direkt verwenden zu können. Im Vergleich zur Nutzung der Ultraschall-Daten zur Erstellung einer \texttt{PointCloud}-Message, lieferte diese Herangehensweise die besseren Resultate, da mit der \texttt{PointCloud}-Message dynamische Hindernisse in den Tests häufig nicht umfahren wurden.
+Statt die normalerweise vom Navigation Stack genutzten \texttt{LaserScan}-Topics und \texttt{PointCloud}-Topics zu nutzen, um Hindernisse in die globale und lokale Costmap eintragen zu können und so auch unerwarteten Hindernissen ausweichen zu können, nutzen wir das \texttt{range\_sensor\_layer}-Plugin \footnote{\url{http://wiki.ros.org/range_sensor_layer}}, um die Daten des vorderen Ultraschallsensors direkt verwenden zu können. Im Vergleich zur Nutzung der Ultraschall-Daten zur Erstellung einer \texttt{PointCloud}-Message, lieferte diese Herangehensweise die besseren Resultate, da mit der \texttt{PointCloud}-Message Hindernisse in den Tests häufig nicht gut umfahren wurden.
 
 \subsubsection{cmd\_vel} \label{cmd}
-Die Werte aus \texttt{cmd\_vel} werden in Übereinstimmung mit den vom Boot erwarteten Werten in dem Skript \texttt{boat\_diff\_vel\_ctrl} in Werte zwischen -100 und 100 umgewandelt und dann auf die Motoren des Bootes geschrieben.
+Die Werte aus \texttt{cmd\_vel} werden in dem Skript \texttt{boat\_diff\_vel\_ctrl} in lineare Geschwindigkeit und Winkelgeschwindigkeit aufgeteilt. Aus der Differenz dieser und der aktuellen linearen und Winkelgeschwindigkeit aus dem Topic \texttt{/odometry/filtered\_map} werden dann je Regeldifferenzen für die lineare und Winkelgeschwindigkeit berechnet, welche danach genutzt werden, um mit Hilfe zweier PID-Regler die ausgeregelten Geschwindigkeiten zu errechnen, die auf die Motoren geschrieben werden.
 
 \subsection{Navigation zu Wegpunkten}
 
 Die tatsächliche Navigation zu den Wegpunkten ist nach Implementierung der Schnittstellen Aufgabe des Navigation Stacks (durch das Publishen des Topics \texttt{cmd\_vel}).\\
-In Testläufen mit reiner Verarbeitung der \texttt{cmd\_vel}-Werte konnte kein sicheres Anfahren der Zielpunkte erreicht werden, obwohl mehrere lokale Planer mit unterschiedlichen Parametern ausprobiert wurden. Der stabilste Planer schien der \texttt{teb\_local\_planner} \footnote{\url{http://wiki.ros.org/teb_local_planner}} zu sein, weshalb wir uns letztendlich für diesen entschieden haben. Die Parameter, die von den Standardeinstellungen abweichen, sind in Listing \ref{local-planner} zu sehen.\\
+In Testläufen mit reiner Weiterleitung der \texttt{cmd\_vel}-Werte ab die Motoren konnte kein sicheres Anfahren der Zielpunkte erreicht werden, obwohl mehrere lokale Planer mit unterschiedlichen Parametern ausprobiert wurden. Der stabilste Planer schien der \texttt{teb\_local\_planner} \footnote{\url{http://wiki.ros.org/teb_local_planner}} zu sein, weshalb wir uns letztendlich für diesen entschieden haben. Die Parameter, die von den Standardeinstellungen abweichen, sind in Listing \ref{local-planner} zu sehen.\\
 \lstinputlisting[label={local-planner}, caption={Parameter des lokalen Planers}, language=yaml]{../base_local_planner_params.yaml}
-Wir vermuteten als Grund für die mäßige Leistung der lokalen Planer, dass das vom Navigation Stack geforderte Verhalten im Wasser später auftritt, als es an Land der Fall wäre und vom Navigation Stack erwartet wird. Daraufhin haben wir die Verarbeitung des Topics noch durch zwei PI-Regler ergänzt, indem wir den PI-Regler aus dem Skript \texttt{boat\_diff\_vel\_ctrl} des Simulators an unsere Gegebenheiten angepasst haben. Einer der Regler gleicht die lineare Geschwindigkeit an, der andere die Winkelgeschwindigkeit.
+Wir vermuteten als Grund für die mäßige Leistung der lokalen Planer, dass das vom Navigation Stack geforderte Verhalten im Wasser später auftritt, als es an Land der Fall wäre und vom Navigation Stack erwartet wird. Daraufhin haben wir die Verarbeitung des \texttt{cmd\_vel}-Topics noch durch zwei PID-Regler ergänzt (s. \ref{cmd}).
 
-\subsection{Vermeidung dynamischer Hindernisse}
+\subsection{Vermeidung unerwarteter Hindernisse}
 Die Vermeidung von Hindernissen wird mit Hilfe des vorderen Ultraschallsensors und des in \ref{sensor-topics} erwähnten Plugins vom Navigation Stack erreicht.
 
 \subsection{Erstellung von Wegpunkten auf Basis der Karte}
-Zur Erstellung der Wegpunkte müssen die GPS-Koordinaten der linken unteren Ecke eines abzufahrenden Bereichs angegeben werden, sowie die Höhe und Breite des abzufahrenden Bereichs in Metern. Außerdem kann ein Intervall in Metern angegeben werden, das den Abstand angibt, in dem Messwerte aufgenommen werden sollen. Um ein möglichst schnelles Abfahren des Bereichs zu gewährleisten, wird der nächste Zielpunkt des Bootes entlang der längeren Seite des Rechtecks gewählt, wenn möglich. Ist der Bereich durch ein Hindernis blockiert, wird einfach nach dem nächstmöglichen Zielpunkt nach demselben Prinzip gesucht. So wir ein Abfahren des gewünschten Bereichs in Zick-Zack-Linien erreicht (s. Abbildung \ref{Fahrtplanung}).
+Zur Erstellung der Wegpunkte müssen die GPS-Koordinaten der linken unteren Ecke eines abzufahrenden Bereichs angegeben werden, sowie die Höhe und Breite des abzufahrenden Bereichs in Metern. Außerdem kann ein Intervall in Metern angegeben werden, das den Abstand angibt, in dem Messwerte aufgenommen werden sollen. Der angegebene Bereich wird wie in Abbildung \ref{Fahrtplanung} zu sehen, in Schlangenlinien abgefahren, wobei Wegpunkte in den gegebenen Abständen erzeugt werden. Ist einer dieser Wegpunkte in einer unerreichbaren Region (nach dem Occupancy Grid auf Grundlage der gegebenen Karte), wird dieser Punkt übersprungen.
 
 \begin{figure}[h]
 	\centering
@@ -356,15 +335,14 @@ Zur Erstellung der Wegpunkte müssen die GPS-Koordinaten der linken unteren Ecke
 \subsection{Erfassung der Wassertiefe} \label{measurements}
 Die Wassertiefe soll immer gemessen werden, wenn die aktuellen Zielkoordinaten erreicht wurden. Dies haben wir erzielt, indem wir in der in \ref{goal} genannten Callback-Methode den zuletzt vom Ultraschallsensor gemessenen Wert, die Koordinaten und die aktuelle Uhrzeit abspeichern. Bei Abschalten des Nodes werden die bis dahin gemessenen Werte, die Uhrzeit, zu der diese aufgenommen wurden, und die zugehörigen GPS-Koordinaten in einer json-Datei gespeichert. Dies ist möglich, indem diese Methode mit Hilfe des \texttt{rospy.on\_shutdown()}-Befehls als Callback-Methode für den Shutdown des Nodes angegeben wird.
 
-\subsection{Ignorieren von unerwartet nicht anfahrbaren Zielpunkte}
+\subsection{Ignorieren unerwartet nicht anfahrbarer Zielpunkte}
 Auf Gewässern kann es viele (auch nicht dynamische) Hindernisse geben, die auf Karten nicht vermerkt sind, zum Beispiel ankernde Boote, Stege, oder Bojen. Diesen Hindernissen muss nicht nur ausgewichen werden, es ist auch notwendig, einen neuen Zielpunkt zu setzen, sollten solche Hindernisse einen Zielpunkt über einen längeren Zeitraum blockieren. 
 
-\subsection{Return Home Verhalten}
+\subsection{Homing Verhalten}
 Da das Boot nicht auf dem Wasser verloren gehen oder unter gehen soll, haben wir das \texttt{measurements\_pub} Skript um einen Subscriber ergänzt, der auf das Safety-Topic subscribt und dem Boot bestimmte Zielkoordinaten (s. \ref{simulation-ergebnisse}) gibt, falls der Batteriestand niedrig ist, oder sich Wasser im Boot befindet, sowie für den Fall, dass der komplette angegebene Bereich erfolgreich abgefahren wurde.
 
 \section{Ergebnisse}
 
-\subsection{Simulator} \label{simulation-ergebnisse}
 Ein Ergebnis unseres Projektes ist ein Simulator, der ein USV simuliert, das Daten mit Hilfe eines GPS-Gerätes, zweiter Ultraschallsensoren und einer IMU aufnimmt und die Daten auf dieselben Topics publisht, die auch das Boot nutzt, das uns zur Verfügung gestellt wurde (s. Abbildung \ref{sonar}).
 
 \begin{figure}[h]
@@ -424,7 +402,7 @@ Wir haben das Szenario mit verschiedenen Einstellungen gestartet:
 \end{tabular}
 \end{center}
 
-\subsubsection{Versuch Nummer 1: freie Fläche}
+\subsection{Versuch Nummer 1: freie Fläche}
 In Versuch Nummer 1 sollte eine freie Fläche von $225m^2$ abgefahren werden. In einem Abstand von $5m$ sollten Messwerte aufgenommen werden. Der abzufahrende Bereich (rotes Rechteck in Abbildung \ref{Versuch1}) wurde im Versuch komplett abgefahren und danach ist das Boot zu den gewünschten Koordinaten zurückgekehrt. Messwerte wurden beim Fahren ebenfalls in den angegebenen Abständen erzeugt (s. Abbildung \ref{Versuch1}).
 
 \begin{figure}[H]
@@ -434,7 +412,7 @@ In Versuch Nummer 1 sollte eine freie Fläche von $225m^2$ abgefahren werden. In
 	\label{Versuch1}
 \end{figure}
 
-\subsubsection{Versuch Nummer 2: unerwartete Hindernisse}
+\subsection{Versuch Nummer 2: unerwartete Hindernisse}
 In Versuch Nummer 2 sollte eine Fläche abgefahren werden, die $20mx16m$ umfasst (s. rotes Rechteck in Abbildung \ref{Versuch2}). Messwerte sollten in einem Abstand von $4m$ aufgenommen werden. Darüber hinaus befanden sich in dem Gebiet Bojen, deren Anwesenheit dem Boot nicht bekannt war. Allen Bojen wurde während des Tests erfolgreich ausgewichen. Ein Beispiel ist in Abbildung \ref{Versuch2} zu sehen.
 
 \begin{figure}[H]
@@ -444,7 +422,7 @@ In Versuch Nummer 2 sollte eine Fläche abgefahren werden, die $20mx16m$ umfasst
 	\label{Versuch2}
 \end{figure}
 
-\subsubsection{Versuch Nummer 3: Fläche mit unerreichbaren Regionen (erwartet)}
+\subsection{Versuch Nummer 3: Fläche mit unerreichbaren Regionen (erwartet)}
 In Versuch Nummer 3 sollte eine Fläche von $20mx16m$ abgefahren werden und dabei in Abständen von $4m$ Messwerte aufgenommen werden. Außerdem waren Teile des Gebietes unbefahrbare Regionen und auch als solche im Occupancy Grid gespeichert. Zielpunkte, die in nicht befahrbaren Regionen lagen, wurden im Laufe des Tests erfolgreich übersprungen (s. Abbildung \ref{Versuch3}).
 
 \begin{figure}[H]
@@ -454,7 +432,7 @@ In Versuch Nummer 3 sollte eine Fläche von $20mx16m$ abgefahren werden und dabe
 	\label{Versuch3}
 \end{figure}
 
-\subsubsection{Versuch Nummer 4: Fläche mit unerreichbaren Regionen (unerwartet)}
+\subsection{Versuch Nummer 4: Fläche mit unerreichbaren Regionen (unerwartet)}
 In Versuch Nummer 4 sollte eine Fläche von $20mx15m$ abgefahren werden und dabei in Abständen von $2.5m$ Messwerte aufgenommen werden. Außerdem waren Teile des Gebietes unbefahrbare Regionen, aber nicht als solche im Occupancy Grid gespeichert. Das Hindernis wurde vom Boot immer erkannt und umfahren. Zielpunkte, die nicht anfahrbar waren, weil sie im Hindernis lagen, wurden vom Boot übersprungen. Danach fuhr das Boot wie geplant mit der Messung fort (s. Abbildung \ref{Versuch4}).
 
 \begin{figure}[H]
@@ -464,7 +442,7 @@ In Versuch Nummer 4 sollte eine Fläche von $20mx15m$ abgefahren werden und dabe
 	\label{Versuch4}
 \end{figure}
 
-\subsubsection{Versuch Nummer 5, 6: Batteriestand gering, Wasser im Boot}
+\subsection{Versuch Nummer 5, 6: Batteriestand gering, Wasser im Boot}
 In Versuchen Nummer 5 und 6 sollte eine Fläche von $15mx15m$ abgefahren werden und dabei in Abständen von $5m$ Messwerte aufgenommen werden. Während des Fahrens sollte der Batteriestand unter 20\% fallen, bzw. der Wassersensor Wasser im Boot feststellen, so dass das Boot direkt "nach Hause" zurückkehren sollte. In beiden Fällen wurde das Verhalten korrekt ausgeführt.\\
 
 \subsection{Versuch 7: Abbruch und Neustart der Messung}
@@ -477,11 +455,10 @@ In Versuchen Nummer 7 sollte eine Fläche von $9mx15m$ abgefahren und dabei in A
 	\label{Versuch7}
 \end{figure}
 
+\subsection{Zusammenfassung}
 Die Zielpunkte wurden in allen Versuchen richtig gesetzt und der Bereich damit korrekt abgefahren. Dabei wurden Orte, die sich in einem (erwartet oder unerwartet) unbefahrbaren Bereich befanden, übersprungen und Hindernissen ausgewichen.\\
 Bei Abbruch der Messung konnte der Versuch später erfolgreich fortgeführt werden und bei Problemen oder nach Beenden der Messungen fuhr das Boot zu den dafür vorher festgelegten Koordinaten.\\
 Die Messung der Wassertiefe konnte im Simulator leider nur bedingt getestet werden, da die Wasseroberfläche als Hindernis wahrgenommen wird. Deshalb wurde dort wie erwartet immer Werte zurückgegeben, die um den Minimalwert des Sensors schwankten. Die Messwerte und ihre Koordinaten wurden nach allen Versuchen automatisch in einer Datei gespeichert.
-
-\subsection{Realität}
 
 
 \section{Fazit} \label{fazit}
