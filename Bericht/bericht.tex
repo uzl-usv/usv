@@ -13,6 +13,7 @@
 \usepackage{textcomp}
 \usepackage{xcolor}
 \usepackage{url}
+\usepackage{float}
 
 \renewcommand{\figurename}{Abbildung}
 
@@ -89,7 +90,7 @@
 \begin{abstract}
 In dieser Projektarbeit wurde ein im Rahmen einer Bachelorarbeit entwickeltes Oberflächenfahrzeug für Wasserexploration in Rettungsszenarien durch Software ergänzt, die es ermöglicht, autonom ein Gewässer abzufahren und dabei die Wassertiefe zu erfassen.\\
 Die notwendigen Funktionalitäten wurden in Python unter Nutzung von ROS und des von ROS bereitgestellten Navigation Stacks implementiert. Um die Funktionsweise testen zu können, wurde außerdem eine Simulation des Bootes auf Basis eines bestehenden Simulators erstellt.\\
-Die richtige Funktionsweise des Bootes wurde im Simulator und auf der Wakenitz getestet.
+Die richtige Funktionsweise des Bootes wurde im Simulator getestet.
 \end{abstract}
 
 \section{Einleitung}
@@ -387,7 +388,7 @@ In dem Projekt \url{https://github.com/uzl-usv/usv} ist das implementierte Verha
 	\item \texttt{roslaunch boot usv.launch params\_file:=<path\_to\_param\_file.yaml>}
 \end{itemize}
 
-%\lstinputlisting[label={params}, caption={Parameter für den Start eines Szenarios}, language=yaml]{../usv_params.yaml}
+\lstinputlisting[label={params}, caption={Parameter für den Start eines Szenarios}, language=yaml]{../versuch1.yaml}
 
 Davor müssen bestimmte Parameter in einer yaml-Datei gesetzt werden wie in Listing \ref{params}. Diese Parameter haben folgende Bedeutungen:
 \begin{itemize}
@@ -426,31 +427,59 @@ Wir haben das Szenario mit verschiedenen Einstellungen gestartet:
 \subsubsection{Versuch Nummer 1: freie Fläche}
 In Versuch Nummer 1 sollte eine freie Fläche von $225m^2$ abgefahren werden. In einem Abstand von $5m$ sollten Messwerte aufgenommen werden. Der abzufahrende Bereich (rotes Rechteck in Abbildung \ref{Versuch1}) wurde im Versuch komplett abgefahren und danach ist das Boot zu den gewünschten Koordinaten zurückgekehrt. Messwerte wurden beim Fahren ebenfalls in den angegebenen Abständen erzeugt (s. Abbildung \ref{Versuch1}).
 
-\begin{figure}[h]
+\begin{figure}[H]
 	\centering
 	\includegraphics[width=0.8\linewidth]{versuch1.png}
-	\caption{Versuch Nummer 1}
+	\caption{Versuch Nummer 1: freie Fläche}
 	\label{Versuch1}
 \end{figure}
 
 \subsubsection{Versuch Nummer 2: unerwartete Hindernisse}
 In Versuch Nummer 2 sollte eine Fläche abgefahren werden, die $20mx16m$ umfasst (s. rotes Rechteck in Abbildung \ref{Versuch2}). Messwerte sollten in einem Abstand von $4m$ aufgenommen werden. Darüber hinaus befanden sich in dem Gebiet Bojen, deren Anwesenheit dem Boot nicht bekannt war. Allen Bojen wurde während des Tests erfolgreich ausgewichen. Ein Beispiel ist in Abbildung \ref{Versuch2} zu sehen.
 
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\linewidth]{versuch2.png}
+	\caption{Versuch Nummer 2: unerwartete Hindernisse}
+	\label{Versuch2}
+\end{figure}
+
 \subsubsection{Versuch Nummer 3: Fläche mit unerreichbaren Regionen (erwartet)}
-In Versuch Nummer 3 sollte eine Fläche von $20mx16m$ abgefahren werden und dabei in Abständen von $4m$ Messwerte aufgenommen werden. Außerdem waren Teile des Gebietes unbefahrbare Regionen und auch als solche im Occupancy Grid gespeichert. Zielpunkte, die in nicht befahrbaren Regionen lagen, wurden im Laufe des Tests erfolgreich übersprungen (s. Abbildung TODO).
+In Versuch Nummer 3 sollte eine Fläche von $20mx16m$ abgefahren werden und dabei in Abständen von $4m$ Messwerte aufgenommen werden. Außerdem waren Teile des Gebietes unbefahrbare Regionen und auch als solche im Occupancy Grid gespeichert. Zielpunkte, die in nicht befahrbaren Regionen lagen, wurden im Laufe des Tests erfolgreich übersprungen (s. Abbildung \ref{Versuch3}).
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\linewidth]{versuch3.png}
+	\caption{Versuch Nummer 3: unbefahrbare Region (erwartet)}
+	\label{Versuch3}
+\end{figure}
 
 \subsubsection{Versuch Nummer 4: Fläche mit unerreichbaren Regionen (unerwartet)}
-In Versuch Nummer 4 sollte eine Fläche von $20mx15m$ abgefahren werden und dabei in Abständen von $2.5m$ Messwerte aufgenommen werden. Außerdem waren Teile des Gebietes unbefahrbare Regionen, aber nicht als solche im Occupancy Grid gespeichert. Das Hindernis wurde vom Boot immer erkannt und umfahren. Zielpunkte, die nicht anfahrbar waren, weil sie im Hindernis lagen, wurden vom Boot übersprungen. Danach fuhr das Boot wie geplant mit der Messung fort (s. Abbildung TODO).
+In Versuch Nummer 4 sollte eine Fläche von $20mx15m$ abgefahren werden und dabei in Abständen von $2.5m$ Messwerte aufgenommen werden. Außerdem waren Teile des Gebietes unbefahrbare Regionen, aber nicht als solche im Occupancy Grid gespeichert. Das Hindernis wurde vom Boot immer erkannt und umfahren. Zielpunkte, die nicht anfahrbar waren, weil sie im Hindernis lagen, wurden vom Boot übersprungen. Danach fuhr das Boot wie geplant mit der Messung fort (s. Abbildung \ref{Versuch4}).
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\linewidth]{versuch4.png}
+	\caption{Versuch Nummer 4: unbefahrbare Region (unerwartet)}
+	\label{Versuch4}
+\end{figure}
 
 \subsubsection{Versuch Nummer 5, 6: Batteriestand gering, Wasser im Boot}
 In Versuchen Nummer 5 und 6 sollte eine Fläche von $15mx15m$ abgefahren werden und dabei in Abständen von $5m$ Messwerte aufgenommen werden. Während des Fahrens sollte der Batteriestand unter 20\% fallen, bzw. der Wassersensor Wasser im Boot feststellen, so dass das Boot direkt "nach Hause" zurückkehren sollte. In beiden Fällen wurde das Verhalten korrekt ausgeführt.\\
 
 \subsection{Versuch 7: Abbruch und Neustart der Messung}
-In Versuchen Nummer 7 sollte eine Fläche von $9mx15m$ abgefahren und dabei in Abständen von $2m$ Messwerte aufgenommen werden. Nach TODO Messpunkten wurde die Messung einmal abgebrochen und dann neu gestartet. Wie in Abbildung TODO zu sehen, wurden dann erst wieder Messwerte ab Punkt TODO aufgenommen.
+In Versuchen Nummer 7 sollte eine Fläche von $9mx15m$ abgefahren und dabei in Abständen von $2m$ Messwerte aufgenommen werden. Nach 11 Messpunkten wurde die Messung einmal abgebrochen und dann neu gestartet. Wie in Abbildung \ref{Versuch7} zu sehen, wurden dann erst wieder Messwerte ab Punkt 12 aufgenommen. Da die Höhe und Breite des Bereichs nicht ganzzahlig durch die  Messabstände teilbar waren, wurden Bereiche an den Rändern ausgelassen.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\linewidth]{versuch7.png}
+	\caption{Versuch Nummer 7: Neustart nach Abbruch}
+	\label{Versuch7}
+\end{figure}
 
 Die Zielpunkte wurden in allen Versuchen richtig gesetzt und der Bereich damit korrekt abgefahren. Dabei wurden Orte, die sich in einem (erwartet oder unerwartet) unbefahrbaren Bereich befanden, übersprungen und Hindernissen ausgewichen.\\
 Bei Abbruch der Messung konnte der Versuch später erfolgreich fortgeführt werden und bei Problemen oder nach Beenden der Messungen fuhr das Boot zu den dafür vorher festgelegten Koordinaten.\\
-Die Messung der Wassertiefe konnte im Simulator leider nur bedingt getestet werden, da die Wasseroberfläche als Hindernis wahrgenommen wird. Deshalb wurde dort wie erwartet immer Werte zurückgegeben, die um den Minimalwert des Sensors schwankten.
+Die Messung der Wassertiefe konnte im Simulator leider nur bedingt getestet werden, da die Wasseroberfläche als Hindernis wahrgenommen wird. Deshalb wurde dort wie erwartet immer Werte zurückgegeben, die um den Minimalwert des Sensors schwankten. Die Messwerte und ihre Koordinaten wurden nach allen Versuchen automatisch in einer Datei gespeichert.
 
 \subsection{Realität}
 
